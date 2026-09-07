@@ -1,0 +1,41 @@
+{
+  "source": "https://github.com/mjkoo/xword-parser",
+  "commit": "f9f1168dfb46d554807c859062ae624a45bb8a0d",
+  "crossFixturesCommit": "f4cab1d02e7573c9bf8f9b732b55436ea665311f",
+  "runtime": "Bun 1.3.14",
+  "pipeline": "parseIpuz -> convertIpuzToUnified -> validatePuzzle; direct source imports, no package installation or other formats tested",
+  "results": [
+    {
+      "fixture": "ordinary",
+      "observation": "Dimensions, cell answers and clue tuples preserved; circle flag preserved when present."
+    },
+    {
+      "fixture": "circled",
+      "observation": "Dimensions, cell answers and clue tuples preserved; circle flag preserved when present."
+    },
+    {
+      "fixture": "rebus",
+      "observation": "Dimensions, cell answers and clue tuples preserved; circle flag preserved when present."
+    },
+    {
+      "fixture": "authored-labels",
+      "observation": "Primitive A label becomes a value in the raw parser. Unified model omits labels and all six clues; validation accepts it."
+    },
+    {
+      "fixture": "linked",
+      "observation": "Raw parser omits label, enumeration and hints; retains continued. Unified clue contains number and text only."
+    },
+    {
+      "fixture": "barred",
+      "observation": "Bar retained as additionalProperties.style.barred; geometry interpretation remains with the consumer."
+    },
+    {
+      "fixture": "in-progress",
+      "observation": "Raw parser retains saved fill; unified result omits it, while retaining the attempt extension as opaque metadata."
+    },
+    {
+      "fixture": "legacy-checksum",
+      "observation": "Raw parser retains checksum; unified result omits it."
+    }
+  ]
+}

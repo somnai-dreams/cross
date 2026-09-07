@@ -1,6 +1,6 @@
 # Cross document contract — draft 0.1
 
-Status: local experimental profile, 7 September 2026. This draft is intended to be changed before adoption. The reference implementation is in `src/`; its conformance examples are in `fixtures/`. No `.cross` file extension, media type, public registry, or stability promise is established here.
+Status: experimental profile, 7 September 2026. This draft is intended to be changed before adoption. The reference implementation is in `src/`; its conformance examples are in `fixtures/`. No `.cross` file extension, media type, public registry, or stability promise is established here. The [project rationale and reuse decision](docs/alternatives.md) explain why this implementation is being evaluated separately from the file format.
 
 ## 1. Boundary and purpose
 
@@ -159,4 +159,4 @@ The whole-grid verifier cannot be converted into a usable answer key. An eventua
 
 A local implementation conforms to this draft when it passes the checked-in profile, rejection, identity, round-trip, export, and completion examples. These tests are necessary, not a proof that every possible input is handled correctly.
 
-Before adopting the contract in the player or a separate package: compare ordinary and variant files in an independent reader; resolve legacy block-checksum conventions; add an explicit `.puz` conversion report; decide whether broader Unicode fill, richer text, and arbitrary entry paths are required by actual puzzles; and stabilize namespace ownership/version migration rules. If these pressures can be handled by ipuz adapters and a typed model, there is no need for another file encoding. A future `.cross` format should be justified by a concrete interoperability failure demonstrated with a fixture.
+The code is now distributed as a separate experimental package and used for build-time exports. That extraction does not establish interoperability or suitability for a player's live state. Before broader adoption: compare ordinary and variant files in an independent reader; resolve legacy block-checksum conventions; add an explicit `.puz` conversion report; decide whether broader Unicode fill, richer text, and arbitrary entry paths are required by actual puzzles; and stabilize namespace ownership/version migration rules. If these pressures can be handled by ipuz adapters and a typed model, there is no need for another file encoding. A future `.cross` format should be justified by a concrete interoperability failure demonstrated with a fixture.

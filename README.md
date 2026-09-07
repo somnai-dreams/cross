@@ -1,8 +1,33 @@
 # Cross
 
-Cross is a small TypeScript library for crossword documents. It separates the public puzzle, optional answer key, completion verifier, and solving attempt. It reads and writes a deliberately bounded ipuz profile and can export an answer-free puzzle with an offline whole-grid completion check.
+Cross is a TypeScript library for publishing and exchanging crossword documents. It keeps the public puzzle, its answers, and a solver's progress separate, and reports when an import or export cannot preserve supported puzzle features.
 
-The runtime uses standard JavaScript and Web Crypto, with no dependencies, renderer, storage layer, or network service. The package exports TypeScript source for Bun and TypeScript-capable bundlers. Its document contract is experimental; see [SPEC.md](SPEC.md) for supported features, exact hash bytes, and limitations. Cross does not introduce a `.cross` file encoding.
+Its purpose is to let constructors and custom players share document rules. For example, a publisher can remove an answer key while retaining a whole-grid completion check. The solver's progress still refers to the same public puzzle; editing a clue changes that reference so old progress is not silently attached to the edited puzzle.
+
+## Why a separate library?
+
+Cross owns document validation, revision identity, and answer-free publication independently of any player. Applications own their interface and persistence. Grid membership is derived from geometry, and crossing entries use the same physical answer cell. Removing an answer key does not require rebuilding the public puzzle.
+
+The project uses [ipuz](https://www.puzzazz.com/ipuz) as its interchange format. ipuz already supports saved progress and verification without a solution. Cross implements a restricted profile plus experimental extensions; it introduces no `.cross` encoding.
+
+There are good reasons to choose an existing project instead:
+
+| Your main requirement | Start with |
+| --- | --- |
+| An embeddable player or a self-contained HTML crossword | [Exolve](https://github.com/viresh-ratnakar/exolve) |
+| TypeScript import across PUZ, ipuz, JPZ, and XD | [xword-parser](https://github.com/mjkoo/xword-parser) |
+| A puzzle manipulation library with a C API and GObject bindings | [libipuz](https://libipuz.org/libipuz-1.0/intro.html) |
+| A custom browser application that needs Cross's publication and progress rules | Evaluate this draft against your actual puzzles |
+
+We compared xword-parser's ipuz parser and unified model using eight synthetic fixtures. Its format-specific parser remains a possible source of future adapters, but the tested unified conversion loses data Cross needs, including saved fill and linked-clue details. The [comparison and reuse decision](docs/alternatives.md) records the exact source revision, results, and limits of that review.
+
+## Current scope
+
+The library reads and writes its ipuz profile, identifies public puzzle revisions, validates attempts, and exports answer-free editions with offline completion checks. A consumer currently uses it for build-time puzzle exports. Integration with a browser player's live state remains unproven.
+
+Cross has no player, `.puz` adapter, HTML packager, construction-draft model, or persistence service. The next milestone is a complete constructor-to-player workflow with saved progress and portable export, plus an independent-reader check of the exchanged ipuz. See the [adoption criteria](docs/alternatives.md#what-would-justify-keeping-cross) before treating that workflow as delivered.
+
+The runtime uses standard JavaScript and Web Crypto with no dependencies. The package exports TypeScript source for Bun and TypeScript-capable bundlers. The document contract is experimental; [SPEC.md](SPEC.md) defines supported features, exact hash bytes, and limitations.
 
 ## Use the package
 
