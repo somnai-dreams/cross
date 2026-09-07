@@ -25,7 +25,7 @@ type PuzHtmlSnapshot = {
     version: 2
     id: string
     puz: string       // Base64 of the native bytes, without an HTML preamble
-    hints: string[]  // Across in number order, then Down in number order
+    hints: string[]  // Native clue order: row-major starts, Across before Down at a shared start
   }
   progress: Json     // null when absent; interpreted by the supplied player
 }
