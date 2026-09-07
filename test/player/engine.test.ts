@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { library, puzzleFiles } from './fixtures'
 import { parsePuzzle, puzzleFile } from '../../src/player/puzzle'
 import { checkCells, defaultPreferences, emptyFill, entryAt, erase, isSolved, moveArrow, newProgress, nextAfterLetter, nextEntry, parseProgress, selectEntry, serializeProgress } from '../../src/player/engine'
-import { revealScrollOffset, desktopGridWidth, gridTypography, zoomGridWidth } from '../../src/player/layout'
+import { revealScrollOffset, desktopGridWidth, gridTypography, wordScrollOffset, zoomGridWidth } from '../../src/player/layout'
 
 test('desktop grids fit short windows and rectangular puzzles on both axes', () => {
   for (const [width, height, columns, rows] of [[510, 380, 15, 15], [350, 700, 15, 15], [510, 400, 5, 25], [510, 400, 25, 5]] as const) {
@@ -52,6 +52,40 @@ describe('desktop clue scrolling', () => {
     const top = revealScrollOffset(0, 200, 600, 350)
     expect(top).toBe(600)
     expect(revealScrollOffset(top, 200, 600, 350)).toBe(top)
+  })
+})
+
+describe('zoomed answer following on either axis', () => {
+  test('shows the full word even when its active cell was already visible', () => {
+    const offset = wordScrollOffset(0, 374, 330, 204, 330, 40)
+    expect(offset).toBeGreaterThan(0)
+    expect(offset).toBeLessThanOrEqual(330)
+    expect(offset + 374).toBeGreaterThanOrEqual(534)
+    for (const cellStart of [330, 371, 412, 453, 494]) {
+      expect(wordScrollOffset(offset, 374, 330, 204, cellStart, 40)).toBe(offset)
+    }
+  })
+  test('reveals the start when selecting a partly filled answer near its end', () => {
+    const offset = wordScrollOffset(500, 374, 330, 204, 494, 40)
+    expect(offset).toBeLessThanOrEqual(330)
+    expect(offset + 374).toBeGreaterThanOrEqual(534)
+  })
+  test('fits an answer exactly without sacrificing letters for padding', () => {
+    expect(wordScrollOffset(0, 368, 330, 368, 330, 40)).toBe(330)
+    expect(wordScrollOffset(900, 368, 330, 368, 658, 40)).toBe(330)
+    expect(wordScrollOffset(0, 374, 2, 204, 2, 40)).toBe(0)
+  })
+  test('tracks longer answers forward and backward without snapping to the start', () => {
+    let offset = 0
+    const starts = Array.from({ length: 15 }, (_, index) => 330 + index * 41)
+    for (const start of [...starts, ...starts.toReversed()]) {
+      offset = wordScrollOffset(offset, 374, 330, 614, start, 40)
+      expect(offset).toBeGreaterThanOrEqual(330)
+      expect(offset + 374).toBeLessThanOrEqual(944)
+      expect(start).toBeGreaterThanOrEqual(offset)
+      expect(start + 40).toBeLessThanOrEqual(offset + 374)
+      expect(wordScrollOffset(offset, 374, 330, 614, start, 40)).toBe(offset)
+    }
   })
 })
 

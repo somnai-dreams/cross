@@ -25,3 +25,14 @@ export function revealScrollOffset(offset: number, viewportSize: number, itemSta
   if (visibleEnd > offset + viewportSize) return visibleEnd - viewportSize
   return offset
 }
+
+/** Frame a whole answer when it fits; otherwise follow its active cell with context. */
+export function wordScrollOffset(offset: number, viewportSize: number, wordStart: number, wordSize: number, cellStart: number, cellSize: number): number {
+  if (wordSize <= viewportSize) {
+    const padding = Math.min(cellSize / 2, (viewportSize - wordSize) / 2)
+    return Math.max(0, revealScrollOffset(offset, viewportSize, wordStart - padding, wordSize + padding * 2))
+  }
+  const padding = Math.min(cellSize, Math.max(0, (viewportSize - cellSize) / 2))
+  const next = revealScrollOffset(offset, viewportSize, cellStart - padding, cellSize + padding * 2)
+  return Math.max(wordStart, Math.min(wordStart + wordSize - viewportSize, next))
+}

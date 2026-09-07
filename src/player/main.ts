@@ -9,7 +9,7 @@ import {
 import { importPuzzle } from './puz'
 import { encodePuz, fromBase64 } from './puz-format'
 import { parsePortable, portableHtml, puzzleFilename, type PlayerAssets } from './portable'
-import { revealScrollOffset, desktopGridWidth, gridTypography, zoomGridWidth } from './layout'
+import { revealScrollOffset, desktopGridWidth, gridTypography, wordScrollOffset, zoomGridWidth } from './layout'
 import { registerPlayerTools, type PlayerRequest } from './webmcp'
 
 type Panel = 'library' | 'help' | 'settings' | 'check' | 'reveal' | 'restart' | 'complete' | 'share' | 'clues' | 'download' | null
@@ -578,9 +578,15 @@ function render(now: number): void {
     const cellHeight = (renderedWidth * puzzle.height / puzzle.width - 4 - (puzzle.height - 1)) / puzzle.height
     const column = st.selection.cell % puzzle.width
     const row = Math.floor(st.selection.cell / puzzle.width)
+    const first = entry.cells[0]!
+    const last = entry.cells[entry.cells.length - 1]!
+    const firstColumn = first % puzzle.width
+    const firstRow = Math.floor(first / puzzle.width)
+    const wordWidth = (last % puzzle.width - firstColumn) * (square + 1) + square
+    const wordHeight = (Math.floor(last / puzzle.width) - firstRow) * (cellHeight + 1) + cellHeight
     dom.boardWrap.scrollTo({
-      left: revealScrollOffset(gridScrollLeft, boardWidth, 2 + column * (square + 1), square),
-      top: revealScrollOffset(gridScrollTop, boardWidth * puzzle.height / puzzle.width, 2 + row * (cellHeight + 1), cellHeight),
+      left: wordScrollOffset(gridScrollLeft, boardWidth, 2 + firstColumn * (square + 1), wordWidth, 2 + column * (square + 1), square),
+      top: wordScrollOffset(gridScrollTop, boardWidth * puzzle.height / puzzle.width, 2 + firstRow * (cellHeight + 1), wordHeight, 2 + row * (cellHeight + 1), cellHeight),
       behavior: 'instant',
     })
   }
