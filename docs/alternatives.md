@@ -1,20 +1,22 @@
 # Why Cross exists
 
-Cross is being evaluated as a shared document library for constructors and custom players. Its useful outcome is that both applications agree on the puzzle being published, which data contains answers, and which puzzle a saved attempt belongs to. A separate repository lets those rules be tested and consumed without depending on a particular player's UI or a constructor's internal state.
+Cross extracts portable file handling from a custom crossword player: native `.puz` import/export, self-contained playable HTML packaging, and the experimental HTML/`.puz` polyglot. A separate package lets another constructor or player use those capabilities without copying the UI. It also owns an ipuz document profile that separates the public puzzle, answers, and revision-bound attempts.
 
-That case is only partly demonstrated. The current consumer exports authored puzzles during a build. The full constructor-to-player workflow still needs to work before we can claim Cross removes duplicated document logic in practice.
+The existing player now uses Cross for its native codec and HTML downloads, including saved progress, and for build-time ipuz exports. That demonstrates reusable file packaging. The broader shared-document case is only partly demonstrated: the native and ipuz paths still have separate models, and a complete constructor-to-player workflow is not implemented.
 
 ## Existing options
 
 [ipuz](https://www.puzzazz.com/ipuz) already defines public grids, solutions, saved fill, and solution-free verification. Cross uses that format. Its stricter input profile and structured completion fingerprint are implementation choices with compatibility costs; neither establishes a need for a new file encoding.
 
-[Exolve](https://github.com/viresh-ratnakar/exolve#serving-and-sharing) provides an interactive player and self-contained HTML distribution, with PUZ and ipuz conversion. It is a direct option for publishing a playable crossword. Cross serves applications that want their own interface and shared document rules. HTML portability alone does not distinguish Cross.
+[Exolve](https://github.com/viresh-ratnakar/exolve#serving-and-sharing) provides an interactive player and self-contained HTML distribution, with PUZ and ipuz conversion. It is a direct option for publishing a playable crossword. Cross serves applications that want their own interface while reusing the file packager and document rules. It also implements a native binary tail for compatible `.puz` readers. HTML portability alone does not distinguish Cross, and this comparison does not claim the polyglot technique is novel.
 
 [libipuz](https://libipuz.org/libipuz-1.0/intro.html) already provides puzzle loading, manipulation, and saving. Its C/Rust implementation exposes a C API through GObject Introspection. Cross's browser/Bun runtime is a reason to consider a separate implementation, but its much narrower supported profile remains a limitation.
 
 [xword-parser](https://github.com/mjkoo/xword-parser) already offers TypeScript imports for PUZ, ipuz, JPZ, and XD, including a unified model. TypeScript support and parsing without file I/O are not distinguishing features of Cross. We examined its ipuz path before deciding whether to replace Cross's reader.
 
 ## Reuse decision
+
+The native codec and HTML packager were extracted from the existing player, with its compatibility tests retained at the consumer boundary and synthetic coverage added here. This was a move of working file behavior, not a new native parser written for the extraction. The tested profile and its limits are in the [portable contract](portable.md).
 
 Keep Cross's current ipuz reader for this draft. Do not adopt xword-parser's unified model as the source of truth. Reconsider its format-specific parsers when adding an actual new-format adapter; this review does not approve or reject its PUZ, JPZ, or XD implementations.
 

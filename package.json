@@ -1,7 +1,7 @@
 {
   "name": "@somnai-dreams/cross",
   "version": "0.1.0",
-  "description": "Typed crossword documents and ipuz interchange",
+  "description": "Portable HTML crosswords, native .puz compatibility, and typed ipuz documents",
   "type": "module",
   "license": "MIT",
   "repository": {

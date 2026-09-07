@@ -1,33 +1,34 @@
 # Cross
 
-Cross is a TypeScript library for publishing and exchanging crossword documents. It keeps the public puzzle, its answers, and a solver's progress separate, and reports when an import or export cannot preserve supported puzzle features.
+Cross is a TypeScript library for portable crossword files. It packages a puzzle and a bundled player into a self-contained HTML file, reads and writes native `.puz`, and includes an experimental HTML/`.puz` polyglot: one file that a browser can play and a signature-scanning `.puz` reader can import.
 
-Its purpose is to let constructors and custom players share document rules. For example, a publisher can remove an answer key while retaining a whole-grid completion check. The solver's progress still refers to the same public puzzle; editing a clue changes that reference so old progress is not silently attached to the edited puzzle.
+The library also provides typed [ipuz](https://www.puzzazz.com/ipuz) documents, separate public puzzles and answer keys, revision-bound progress, and answer-free whole-grid verification. Applications supply their interface and persistence. The runtime has no dependencies.
 
 ## Why a separate library?
 
-Cross owns document validation, revision identity, and answer-free publication independently of any player. Applications own their interface and persistence. Grid membership is derived from geometry, and crossing entries use the same physical answer cell. Removing an answer key does not require rebuilding the public puzzle.
+A constructor or custom player should be able to offer portable files without owning binary checksums, HTML packaging, and document conversion rules. Cross extracts those responsibilities from an existing player so other applications can use them directly.
 
-The project uses [ipuz](https://www.puzzazz.com/ipuz) as its interchange format. ipuz already supports saved progress and verification without a solution. Cross implements a restricted profile plus experimental extensions; it introduces no `.cross` encoding.
+Cross does not introduce a `.cross` encoding. Native `.puz` remains the compatibility payload for the playable HTML experiment; ipuz is the richer document interchange format. These have separate typed adapters today. A metadata-preserving conversion between them is still needed.
 
-There are good reasons to choose an existing project instead:
-
-| Your main requirement | Start with |
+| Requirement | Existing option |
 | --- | --- |
-| An embeddable player or a self-contained HTML crossword | [Exolve](https://github.com/viresh-ratnakar/exolve) |
-| TypeScript import across PUZ, ipuz, JPZ, and XD | [xword-parser](https://github.com/mjkoo/xword-parser) |
-| A puzzle manipulation library with a C API and GObject bindings | [libipuz](https://libipuz.org/libipuz-1.0/intro.html) |
-| A custom browser application that needs Cross's publication and progress rules | Evaluate this draft against your actual puzzles |
+| A ready-made player with self-contained HTML distribution | [Exolve](https://github.com/viresh-ratnakar/exolve) |
+| TypeScript imports across PUZ, ipuz, JPZ, and XD | [xword-parser](https://github.com/mjkoo/xword-parser) |
+| Puzzle manipulation with a C API and GObject bindings | [libipuz](https://libipuz.org/libipuz-1.0/intro.html) |
+| Your own player, reusable HTML/`.puz` packaging, and explicit document publication rules | Evaluate Cross against your puzzles |
 
-We compared xword-parser's ipuz parser and unified model using eight synthetic fixtures. Its format-specific parser remains a possible source of future adapters, but the tested unified conversion loses data Cross needs, including saved fill and linked-clue details. The [comparison and reuse decision](docs/alternatives.md) records the exact source revision, results, and limits of that review.
+HTML portability alone is not new. Cross's intended value is a small reusable file library that leaves the application in control of its UI and data. The [comparison and reuse decision](docs/alternatives.md) records the evidence and the workflow still needed to establish that value.
 
 ## Current scope
 
-The library reads and writes its ipuz profile, identifies public puzzle revisions, validates attempts, and exports answer-free editions with offline completion checks. A consumer currently uses it for build-time puzzle exports. Integration with a browser player's live state remains unproven.
+- Native `.puz` decoding and encoding, including checksums and circles.
+- Playable HTML packaging from a native puzzle and caller-supplied bundled script/CSS.
+- Inert HTML data import, with equality checks between the embedded and binary puzzle copies.
+- Typed ipuz parsing, writing, revision identity, attempts, and answer-free verification.
 
-Cross has no player, `.puz` adapter, HTML packager, construction-draft model, or persistence service. The next milestone is a complete constructor-to-player workflow with saved progress and portable export, plus an independent-reader check of the exchanged ipuz. See the [adoption criteria](docs/alternatives.md#what-would-justify-keeping-cross) before treating that workflow as delivered.
+An existing crossword player consumes both the native codec and HTML packager, including its progress downloads. Its build also uses the ipuz export path. Cross does not yet ship a default renderer, migrate that player's live state to the ipuz model, or convert imported `.puz` metadata to ipuz.
 
-The runtime uses standard JavaScript and Web Crypto with no dependencies. The package exports TypeScript source for Bun and TypeScript-capable bundlers. The document contract is experimental; [SPEC.md](SPEC.md) defines supported features, exact hash bytes, and limitations.
+The ordinary `.puz` download contains only the native payload. The HTML download contains the player, JSON data, and the same native bytes at the end; they are different files. The polyglot is experimental: readers that require the header at byte 2 need the ordinary `.puz` export. Native `.puz` and this HTML edition contain the answers. Answer-free publication currently applies to ipuz only.
 
 ## Use the package
 
@@ -37,11 +38,40 @@ Install from a specific Git commit for reproducible consumption:
 bun add '@somnai-dreams/cross@github:somnai-dreams/cross#<commit-sha>'
 ```
 
+Package an existing native puzzle with your player bundle:
+
+```ts
+import { decodePuz, toBase64, writePuzHtml } from '@somnai-dreams/cross'
+
+const bytes = new Uint8Array(await Bun.file('puzzle.puz').arrayBuffer())
+const parsed = decodePuz(bytes)
+if (!parsed.ok) {
+  console.error(parsed.issue.message)
+} else {
+  const [script, css] = await Promise.all([
+    Bun.file('bundled-player.js').text(),
+    Bun.file('player.css').text(),
+  ])
+  const html = writePuzHtml({
+    puzzle: {
+      version: 2, id: 'my-puzzle', puz: toBase64(bytes),
+      hints: Array<string>(parsed.value.across.length + parsed.value.down.length).fill(''),
+    },
+    progress: null,
+  }, { script, css })
+  if (html.ok) await Bun.write('puzzle.html', html.value)
+  else console.error(html.issue.message)
+}
+```
+
+The supplied script mounts into `#app` and reads `#crossword-data` with `readPuzHtmlData`. It must implement the player and include its dependencies; arbitrary script/CSS is not automatically made offline. See the [portable file contract](docs/portable.md) for renderer startup, re-export, progress, and native format limits.
+
+To publish an answer-free ipuz:
+
 ```ts
 import { answerFree, readIpuzBytes } from '@somnai-dreams/cross'
 
-const bytes = new Uint8Array(await Bun.file('puzzle.ipuz').arrayBuffer())
-const parsed = await readIpuzBytes(bytes)
+const parsed = await readIpuzBytes(new Uint8Array(await Bun.file('puzzle.ipuz').arrayBuffer()))
 if (!parsed.ok) {
   console.error(parsed.issue.path, parsed.issue.message)
 } else {
@@ -51,7 +81,7 @@ if (!parsed.ok) {
 }
 ```
 
-The public API also exports `readIpuz`, `writeIpuz`, `revision`, `assess`, `entries`, `entryCells`, `sameEntry`, the extension field names, and the domain types. Parsing returns either a complete normalized document or a structured issue; it never returns a partial puzzle.
+The package exports TypeScript source for Bun and TypeScript-capable bundlers. Parsing returns a complete supported value or a structured issue. [SPEC.md](SPEC.md) defines the experimental ipuz profile and exact verification bytes. The answer-free check permits offline guesses; it provides neither reveal nor proof of an unaided solve.
 
 ## Develop
 
@@ -63,20 +93,10 @@ bun run fixtures
 bun src/cli.ts answer-free fixtures/ordinary.ipuz > /tmp/public.ipuz
 ```
 
-Checks use TypeScript 7 and type-aware Oxlint. The toolchain and lockfile belong to this repository. No sibling checkout is needed. CI runs the same commands.
-
-## Supported behavior
-
-- Rectangular Across/Down grids, circles, internal bars, rebus cells, authored labels, and linked clues.
-- Semantic import/export round trips, with explicit errors for unsupported fields and variants.
-- Public revision identity that excludes the answer key and attempt.
-- Separate incomplete, complete-unverified, correct, and incorrect assessments.
-- Answer-free export using SHA-256 over an array of cell values, preserving rebus boundaries.
-
-The answer-free check permits offline guesses. It provides neither per-cell reveal nor proof of an unaided solve. Independent-reader interoperability is not certified. Legacy ipuz checksum block conventions remain an explicit verification gate; the structured extension is implemented by Cross. See the specification before using this draft in a production format pipeline.
+Checks use TypeScript 7 and type-aware Oxlint. CI runs the same commands. No sibling checkout is needed.
 
 ## Fixtures and license
 
-The eleven small fixture documents are synthetic conformance cases. Some use artificial letter sequences or deliberately altered answers. `fixtures/vectors.json` freezes hash preimages and digests independently constructed with Python `hashlib` for the ordinary puzzle. The TypeScript suite separately exercises Unicode and canonical JSON ordering.
+The eleven ipuz documents are synthetic conformance cases, including deliberately altered answers. `fixtures/vectors.json` freezes hash preimages and digests independently constructed with Python `hashlib`. `fixtures/native-utf8.puz` is a synthetic version-2.0 puzzle written by puzpy 0.6.0; [its provenance and the native compatibility evidence](docs/portable.md#verification-evidence) are recorded separately.
 
-Code, the Cross specification, and the original synthetic fixtures are available under the MIT license. Referenced incumbent specifications retain their own terms. ipuz is a trademark of Puzzazz, Inc., used with permission.
+Code, the Cross specification, and the original synthetic fixtures are MIT licensed. Referenced incumbent specifications retain their own terms. ipuz is a trademark of Puzzazz, Inc., used with permission.

@@ -2,3 +2,7 @@ export { answerFree, attemptField, namespace, readIpuz, readIpuzBytes, verificat
 export { entries, entryCells, sameEntry } from './model'
 export type { AnswerKey, Assessment, Attempt, Cell, Clue, Direction, Document, EntryRef, Failure, Issue, Label, Puzzle, Result, Verifier } from './model'
 export { assess, revision } from './verification'
+export { checksum, decodePuz, encodePuz, fromBase64, puzPayload, toBase64 } from './puz'
+export type { PuzData } from './puz'
+export { readPuzHtml, readPuzHtmlData, writePuzHtml } from './portable'
+export type { PlayerAssets, PuzHtmlSnapshot } from './portable'
