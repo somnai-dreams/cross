@@ -1,0 +1,77 @@
+{
+  "version": "http://ipuz.org/v2",
+  "kind": [
+    "http://ipuz.org/crossword#1"
+  ],
+  "title": "Small things",
+  "author": "Cross conformance examples",
+  "dimensions": {
+    "width": 3,
+    "height": 3
+  },
+  "puzzle": [
+    [
+      "A",
+      "B",
+      "C"
+    ],
+    [
+      "D",
+      0,
+      0
+    ],
+    [
+      "E",
+      0,
+      0
+    ]
+  ],
+  "solution": [
+    [
+      "C",
+      "A",
+      "T"
+    ],
+    [
+      "O",
+      "R",
+      "E"
+    ],
+    [
+      "D",
+      "E",
+      "N"
+    ]
+  ],
+  "explanation": "Private explanation sentinel: CAT / ORE / DEN.",
+  "clues": {
+    "Across": [
+      [
+        "A",
+        "Pet that purrs"
+      ],
+      [
+        "D",
+        "Rock containing metal"
+      ],
+      [
+        "E",
+        "A fox’s home"
+      ]
+    ],
+    "Down": [
+      [
+        "A",
+        "Fish often battered"
+      ],
+      [
+        "B",
+        "You ___ here"
+      ],
+      [
+        "C",
+        "Five doubled"
+      ]
+    ]
+  }
+}

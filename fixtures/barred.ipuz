@@ -1,0 +1,89 @@
+{
+  "version": "http://ipuz.org/v2",
+  "kind": [
+    "http://ipuz.org/crossword#1"
+  ],
+  "title": "Bar ownership probe",
+  "author": "Cross conformance examples",
+  "dimensions": {
+    "width": 4,
+    "height": 2
+  },
+  "puzzle": [
+    [
+      1,
+      {
+        "cell": 2,
+        "style": {
+          "barred": "R"
+        }
+      },
+      3,
+      4
+    ],
+    [
+      5,
+      {
+        "cell": 0,
+        "style": {
+          "barred": "R"
+        }
+      },
+      6,
+      0
+    ]
+  ],
+  "solution": [
+    [
+      "A",
+      "B",
+      "C",
+      "D"
+    ],
+    [
+      "E",
+      "F",
+      "G",
+      "H"
+    ]
+  ],
+  "explanation": "Private explanation sentinel: CAT / ORE / DEN.",
+  "clues": {
+    "Across": [
+      [
+        1,
+        "First pair"
+      ],
+      [
+        3,
+        "Second pair"
+      ],
+      [
+        5,
+        "Third pair"
+      ],
+      [
+        6,
+        "Fourth pair"
+      ]
+    ],
+    "Down": [
+      [
+        1,
+        "First column"
+      ],
+      [
+        2,
+        "Second column"
+      ],
+      [
+        3,
+        "Third column"
+      ],
+      [
+        4,
+        "Fourth column"
+      ]
+    ]
+  }
+}

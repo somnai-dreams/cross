@@ -1,0 +1,77 @@
+{
+  "version": "http://ipuz.org/v2",
+  "kind": [
+    "http://ipuz.org/crossword#1"
+  ],
+  "title": "Block checksum probe",
+  "author": "Cross conformance examples",
+  "dimensions": {
+    "width": 3,
+    "height": 3
+  },
+  "puzzle": [
+    [
+      1,
+      2,
+      "#"
+    ],
+    [
+      3,
+      0,
+      4
+    ],
+    [
+      "#",
+      5,
+      0
+    ]
+  ],
+  "solution": [
+    [
+      "A",
+      "B",
+      "#"
+    ],
+    [
+      "C",
+      "D",
+      "E"
+    ],
+    [
+      "#",
+      "F",
+      "G"
+    ]
+  ],
+  "explanation": "Private explanation sentinel: CAT / ORE / DEN.",
+  "clues": {
+    "Across": [
+      [
+        1,
+        "First pair"
+      ],
+      [
+        3,
+        "Middle row"
+      ],
+      [
+        5,
+        "Last pair"
+      ]
+    ],
+    "Down": [
+      [
+        1,
+        "Left pair"
+      ],
+      [
+        2,
+        "Middle column"
+      ],
+      [
+        4,
+        "Right pair"
+      ]
+    ]
+  }
+}

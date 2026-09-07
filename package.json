@@ -1,0 +1,35 @@
+{
+  "name": "@somnai-dreams/cross",
+  "version": "0.1.0",
+  "description": "Typed crossword documents and ipuz interchange",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/somnai-dreams/cross.git"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": [
+    "src",
+    "fixtures",
+    "SPEC.md",
+    "README.md",
+    "LICENSE"
+  ],
+  "sideEffects": false,
+  "scripts": {
+    "tsc": "bun node_modules/@typescript/native/bin/tsgo",
+    "check": "bun run tsc --noEmit && bun --bun x oxlint --type-aware src test",
+    "test": "bun test test",
+    "fixtures": "bun src/cli.ts"
+  },
+  "devDependencies": {
+    "@types/bun": "1.4.1",
+    "@typescript/native": "npm:@typescript/native-preview@7.0.0-dev.20260707.2",
+    "typescript": "5.9.3",
+    "oxlint": "1.81.0",
+    "oxlint-tsgolint": "7.0.2001"
+  }
+}
