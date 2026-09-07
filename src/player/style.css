@@ -449,8 +449,11 @@ h1 {
   position:absolute;
   right:0;
   top:0;
-  border-top:9px solid #5d60ce;
-  border-left:9px solid transparent
+  width:min(20%,6px);
+  aspect-ratio:1;
+  background:#5d60ce;
+  clip-path:polygon(0 0,100% 0,100% 100%);
+  pointer-events:none
 }
 
 .cell-circle {
