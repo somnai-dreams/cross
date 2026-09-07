@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 import { library, puzzleFiles } from './fixtures'
 import { parsePuzzle, puzzleFile } from '../../src/player/puzzle'
 import { checkCells, defaultPreferences, emptyFill, entryAt, erase, isSolved, moveArrow, newProgress, nextAfterLetter, nextEntry, parseProgress, selectEntry, serializeProgress } from '../../src/player/engine'
-import { clueScrollTop, desktopGridWidth, gridTypography } from '../../src/player/layout'
+import { revealScrollOffset, desktopGridWidth, gridTypography, zoomGridWidth } from '../../src/player/layout'
 
 test('desktop grids fit short windows and rectangular puzzles on both axes', () => {
   for (const [width, height, columns, rows] of [[510, 380, 15, 15], [350, 700, 15, 15], [510, 400, 5, 25], [510, 400, 25, 5]] as const) {
@@ -13,19 +13,45 @@ test('desktop grids fit short windows and rectangular puzzles on both axes', () 
   }
 })
 
+test('zoom gives large puzzles readable, non-overlapping touch targets', () => {
+  for (const width of [304, 374, 404, 510]) {
+    for (const columns of [15, 21, 45, 64]) {
+      const zoomed = zoomGridWidth(width, columns)
+      const square = (zoomed - 4 - (columns - 1)) / columns
+      expect(zoomed).toBeGreaterThan(width)
+      expect(square).toBeGreaterThanOrEqual(40)
+      expect(gridTypography(zoomed, columns).letter).toBeGreaterThanOrEqual(22)
+    }
+  }
+})
+
+test('a zoomed 45x45 grid reveals distant cells and wraps back without scrolling the page', () => {
+  const viewport = 374
+  const width = zoomGridWidth(viewport, 45)
+  const square = (width - 48) / 45
+  let offset = 0
+  for (const cell of [0, 8, 9, 22, 44, 0]) {
+    const start = 2 + cell * (square + 1)
+    offset = revealScrollOffset(offset, viewport, start, square)
+    expect(start).toBeGreaterThanOrEqual(offset)
+    expect(start + square).toBeLessThanOrEqual(offset + viewport)
+  }
+  expect(offset).toBe(2)
+})
+
 describe('desktop clue scrolling', () => {
   test('keeps an already visible clue in place', () => {
-    expect(clueScrollTop(300, 400, 350, 80)).toBe(300)
+    expect(revealScrollOffset(300, 400, 350, 80)).toBe(300)
   })
   test('reveals later clues and returns to the first clue on wraparound', () => {
-    const last = clueScrollTop(0, 400, 2100, 80)
+    const last = revealScrollOffset(0, 400, 2100, 80)
     expect(last).toBe(1780)
-    expect(clueScrollTop(last, 400, 0, 80)).toBe(0)
+    expect(revealScrollOffset(last, 400, 0, 80)).toBe(0)
   })
   test('reveals the beginning of a clue taller than the scroll area', () => {
-    const top = clueScrollTop(0, 200, 600, 350)
+    const top = revealScrollOffset(0, 200, 600, 350)
     expect(top).toBe(600)
-    expect(clueScrollTop(top, 200, 600, 350)).toBe(top)
+    expect(revealScrollOffset(top, 200, 600, 350)).toBe(top)
   })
 })
 

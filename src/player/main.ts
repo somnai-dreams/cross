@@ -9,7 +9,7 @@ import {
 import { importPuzzle } from './puz'
 import { encodePuz, fromBase64 } from './puz-format'
 import { parsePortable, portableHtml, puzzleFilename, type PlayerAssets } from './portable'
-import { clueScrollTop, desktopGridWidth, gridTypography } from './layout'
+import { revealScrollOffset, desktopGridWidth, gridTypography, zoomGridWidth } from './layout'
 import { registerPlayerTools, type PlayerRequest } from './webmcp'
 
 type Panel = 'library' | 'help' | 'settings' | 'check' | 'reveal' | 'restart' | 'complete' | 'share' | 'clues' | 'download' | null
@@ -84,7 +84,7 @@ app.innerHTML = `
       <section class="board-column" aria-label="Crossword puzzle">
         <div class="active-clue desktop-clue"><span id="clue-label" class="clue-badge"></span><p id="clue-text"></p><span id="clue-length" class="clue-length"></span><button class="icon-button" data-command="toggle-direction" aria-label="Switch across or down">${icon('swap',18)}</button></div>
         <div class="grid-space"><div class="board-wrap"><div id="board" class="board" role="grid" tabindex="0" aria-label="Crossword grid. Type letters; arrows move; Space changes direction; Tab changes clue; Escape leaves the grid."></div><div id="pause-cover" class="pause-cover" hidden><span class="pause-symbol">${icon('pause',36)}</span><h2>A little breather.</h2><p>Your puzzle will be right here.</p><button class="primary-button" data-command="resume">${icon('play',18)}Resume puzzle</button></div></div><div class="grid-details">
-        <div class="board-caption"><span id="save-status"><span class="status-dot"></span>Saved on this device</span><div class="board-caption-tools"><button id="zoom-button" class="text-button mobile-list-button" data-command="zoom" aria-pressed="false">Zoom grid</button><button class="text-button mobile-list-button" data-command="panel:clues">All clues</button></div><button class="text-button desktop-shortcuts" data-command="panel:help">Keyboard shortcuts <span aria-hidden="true">↗</span></button></div>
+        <div class="board-caption"><span id="save-status"><span class="status-dot"></span>Saved on this device</span><div class="board-caption-tools"><button id="zoom-button" class="text-button mobile-list-button" data-command="zoom" aria-pressed="false">Zoom grid</button><button class="text-button mobile-list-button" data-command="panel:clues">All clues</button></div><button class="text-button desktop-shortcuts" data-command="panel:help">Shortcuts <span aria-hidden="true">↗</span></button></div>
         <div id="hint-card" class="hint-card"><div class="hint-heading">${icon('bulb',19)}<span>A fresh way in</span></div><p id="hint-text">Stuck on a clue? Get a nudge without revealing the answer.</p><button id="hint-button" class="hint-button" data-command="hint">Get a hint <span aria-hidden="true">↗</span></button></div>
         </div></div>
       </section>
@@ -343,6 +343,7 @@ function buildPuzzleDom(): void {
   dom.down.replaceChildren()
   dom.board.style.setProperty('--columns', String(puzzle.width))
   dom.board.style.setProperty('--rows', String(puzzle.height))
+  dom.clueLists.style.setProperty('--clue-number-width', `${Math.max(2, String(puzzle.entries[puzzle.entries.length - 1]!.number).length)}ch`)
   dom.board.setAttribute('aria-rowcount', String(puzzle.height))
   dom.board.setAttribute('aria-colcount', String(puzzle.width))
   const starts = puzzle.entries.map(entry => entry.cells[0]!)
@@ -393,6 +394,8 @@ function render(now: number): void {
   const gridSpaceHeight = dom.gridSpace.getBoundingClientRect().height - dom.gridDetails.getBoundingClientRect().height
   const clueListsParent = dom.clueLists.parentElement
   const dockHeight = dom.dock.offsetHeight
+  const gridScrollLeft = dom.boardWrap.scrollLeft
+  const gridScrollTop = dom.boardWrap.scrollTop
   const previousEntry = entryAt(puzzle, st.selection)
   const previousPanel = st.panel
   const actions = st.events.splice(0)
@@ -465,7 +468,7 @@ function render(now: number): void {
   let nextClueScroll: number | null = null
   if (scrollClue && !mobile && renderedPuzzle === puzzle && clueListsParent === dom.playLayout) {
     const clue = dom.clues[selectedEntry]!
-    nextClueScroll = clueScrollTop(cluePane.scrollTop, cluePane.clientHeight, clue.offsetTop, clue.offsetHeight)
+    nextClueScroll = revealScrollOffset(cluePane.scrollTop, cluePane.clientHeight, clue.offsetTop, clue.offsetHeight)
   }
   // All DOM projection follows state changes. Grid geometry follows one size.
   const puzzleChanged = renderedPuzzle !== puzzle
@@ -473,15 +476,16 @@ function render(now: number): void {
   const clueListsTarget = st.panel === 'clues' ? dom.cluePanel : dom.playLayout
   if (clueListsParent !== clueListsTarget) clueListsTarget.append(dom.clueLists)
   document.body.className = `${st.mode === 'paused' ? 'is-paused' : ''} ${st.mode === 'complete' ? 'is-complete' : ''}`
-  const zoomed = mobile && st.zoom
+  const zoomed = st.zoom
   const boardWidth = mobile ? columnWidth : desktopGridWidth(columnWidth, gridSpaceHeight, puzzle.width, puzzle.height)
-  const typography = gridTypography(boardWidth * (zoomed ? 1.8 : 1), puzzle.width)
+  const renderedWidth = zoomed ? zoomGridWidth(boardWidth, puzzle.width) : boardWidth
+  const typography = gridTypography(renderedWidth, puzzle.width)
   dom.boardWrap.className = `board-wrap${zoomed ? ' is-zoomed' : ''}`
   dom.boardWrap.style.width = `${boardWidth}px`
   dom.gridDetails.style.width = `${boardWidth}px`
   dom.playLayout.style.setProperty('--grid-width', `${boardWidth}px`)
   dom.boardWrap.style.aspectRatio = `${puzzle.width} / ${puzzle.height}`
-  dom.board.style.width = zoomed ? '180%' : '100%'
+  dom.board.style.width = `${renderedWidth}px`
   document.documentElement.style.setProperty('--keyboard-height', `${dockHeight}px`)
   dom.zoom.textContent = st.zoom ? 'Fit grid' : 'Zoom grid'
   dom.zoom.setAttribute('aria-pressed', String(st.zoom))
@@ -569,7 +573,18 @@ function render(now: number): void {
   if (previousEntry !== entry) dom.clueText.scrollTop = 0
   if (puzzleChanged) { dom.across.scrollTop = 0; dom.down.scrollTop = 0 }
   if (nextClueScroll !== null) cluePane.scrollTo({ top: nextClueScroll, behavior: 'instant' })
-  if (scrollClue && mobile && st.panel === null && st.mode !== 'paused') dom.cells[st.selection.cell]!.node.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
+  if (scrollClue && zoomed && st.panel === null && st.mode !== 'paused') {
+    const square = (renderedWidth - 4 - (puzzle.width - 1)) / puzzle.width
+    const cellHeight = (renderedWidth * puzzle.height / puzzle.width - 4 - (puzzle.height - 1)) / puzzle.height
+    const column = st.selection.cell % puzzle.width
+    const row = Math.floor(st.selection.cell / puzzle.width)
+    dom.boardWrap.scrollTo({
+      left: revealScrollOffset(gridScrollLeft, boardWidth, 2 + column * (square + 1), square),
+      top: revealScrollOffset(gridScrollTop, boardWidth * puzzle.height / puzzle.width, 2 + row * (cellHeight + 1), cellHeight),
+      behavior: 'instant',
+    })
+  }
+  if (scrollClue && mobile && st.panel === null && st.mode !== 'paused') dom.boardWrap.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' })
   if (requestFile) dom.file.click()
   if (pendingDownload !== null) {
     const kind = pendingDownload

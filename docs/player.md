@@ -54,6 +54,8 @@ The player separates puzzle, mutable progress, ephemeral input, and DOM nodes. D
 
 The UI includes desktop keyboard entry, independently scrolling Across/Down columns, mobile clue navigation and keyboard, pencil mode, hints, check/reveal scopes, pause and timer preferences, completion, restart, import, and all three export modes. The optional WebMCP surface uses that same input queue.
 
+Both desktop and mobile offer **Zoom grid / Fit grid**. Fit shows the whole grid; zoom uses at least 40-pixel cells, rather than a fixed multiplier that leaves large puzzles unreadable. The board scrolls on both axes and follows the selected cell during entry and clue navigation. Clue columns keep their independent scroll positions.
+
 Local progress is tied to exact puzzle content, not only its ID. The storage namespace defaults to `cross`; a collection can select a namespace to retain its existing persistence. A standalone file always boots its embedded puzzle. Restored browser-local progress takes precedence on subsequent openings; an explicit HTML import's validated progress takes precedence when loaded. Saving creates a download, never an in-place file rewrite.
 
 This is a complete-document player, not yet a multi-instance embedded widget with mount/destroy lifecycle. A self-contained file owns its document. Headless consumers can reuse the pure data/engine APIs in another interface.

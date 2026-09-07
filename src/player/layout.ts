@@ -13,10 +13,15 @@ export function desktopGridWidth(width: number, height: number, columns: number,
   return Math.min(width, height * columns / rows)
 }
 
-/** Reveal the selected clue within its own column, without moving the page. */
-export function clueScrollTop(scrollTop: number, viewportHeight: number, clueTop: number, clueHeight: number): number {
-  if (clueTop < scrollTop) return clueTop
-  const visibleBottom = clueTop + Math.min(clueHeight, viewportHeight)
-  if (visibleBottom > scrollTop + viewportHeight) return visibleBottom - viewportHeight
-  return scrollTop
+/** Zoom is a readable cell size, even when the full grid has 45 or 64 columns. */
+export function zoomGridWidth(width: number, columns: number): number {
+  return Math.max(width * 1.8, columns * 40 + (columns - 1) + 4)
+}
+
+/** Reveal an item within one scroll axis, without moving any ancestor. */
+export function revealScrollOffset(offset: number, viewportSize: number, itemStart: number, itemSize: number): number {
+  if (itemStart < offset) return itemStart
+  const visibleEnd = itemStart + Math.min(itemSize, viewportSize)
+  if (visibleEnd > offset + viewportSize) return visibleEnd - viewportSize
+  return offset
 }
