@@ -17,7 +17,7 @@ There are four separate pieces:
 | Verifier | No verifier, legacy ipuz checksum, or draft structured SHA-256 fingerprint | Stored completion status |
 | Optional attempt | Public revision reference, entered cell values, elapsed milliseconds | Answer key, verdict, UI selection, undo history |
 
-Cross also implements native `.puz` decoding/encoding and a playable HTML polyglot packager, specified in the [portable file contract](docs/portable.md). That container currently embeds native bytes and renderer-owned progress, not this ipuz model. A metadata-preserving bridge between the two adapters is still needed. The native HTML edition contains the solution; it does not provide this contract's answer-free publication behavior.
+Cross also includes a complete desktop/mobile player, native `.puz` decoding/encoding, and a playable HTML polyglot packager, specified in the [portable file contract](docs/portable.md). That container currently embeds native bytes and renderer-owned progress, not this ipuz model. A metadata-preserving bridge between the two adapters is still needed. The native HTML edition contains the solution; it does not provide this contract's answer-free publication behavior.
 
 ## 2. Public model
 

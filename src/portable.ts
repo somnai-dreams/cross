@@ -50,16 +50,18 @@ export function readPuzHtml(bytes: Uint8Array<ArrayBuffer>): Result<PuzHtmlSnaps
 }
 
 /** Package a trusted, bundled player and one native puzzle as an experimental polyglot. */
-export function writePuzHtml(snapshot: PuzHtmlSnapshot, assets: PlayerAssets): Result<Uint8Array<ArrayBuffer>> {
+export function writePuzHtml(snapshot: PuzHtmlSnapshot, assets: PlayerAssets, options: { title?: string; configuration?: Json } = {}): Result<Uint8Array<ArrayBuffer>> {
   const checked = readPuzHtmlData(JSON.stringify(snapshot))
   if (!checked.ok) return checked
   const binary = fromBase64(checked.value.puzzle.puz)
+  const title = (options.title ?? 'Crossword').replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;')
+  const config = options.configuration === undefined ? '' : '<script id="crossword-config" type="application/json">' + JSON.stringify(options.configuration).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026') + '</script>'
   const json = JSON.stringify(checked.value).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026')
   const script = toBase64(new TextEncoder().encode(assets.script))
-  const css = assets.css.replace(/@import[^;]+;/g, '')
+  const css = assets.css.replace(/@import\s+(?:url\((?:"[^"]*"|'[^']*'|[^)]*)\)|"[^"]*"|'[^']*')[^;]*;/gi, '')
   const prefix = new TextEncoder().encode(`<!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#f8f9fc"><title>Crossword</title><style id="player-style">${css}</style></head>
-<body><div id="app"></div>${marker}${json}</script><script id="player-code" type="module" src="data:text/javascript;base64,${script}"></script>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#f8f9fc"><title>${title}</title><style id="player-style">${css}</style></head>
+<body><div id="app"></div>${config}${marker}${json}</script><script id="player-code" type="module" src="data:text/javascript;base64,${script}"></script>
 <plaintext hidden aria-hidden="true">`)
   const output = new Uint8Array(prefix.length + binary.length)
   output.set(prefix); output.set(binary, prefix.length)

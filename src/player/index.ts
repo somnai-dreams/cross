@@ -1,0 +1,11 @@
+// Player data and pure solving operations. Importing this entry point creates no DOM.
+export { parsePuzzle, puzzleFile, puzzleIdentity, numberEntries } from './puzzle'
+export type { AuthoredPuzzle, Puzzle, Cell, Entry, Direction, Clue, Result } from './puzzle'
+export { newProgress, parseProgress, serializeProgress, progressFile, defaultPreferences, emptyFill, entryAt, erase, filledCount, isSolved, moveArrow, nextAfterLetter, nextEntry, selectEntry, checkCells } from './engine'
+export type { Fill, Progress, Selection, Preferences } from './engine'
+export { createNavigation } from './location'
+export type { LibraryEntry } from './location'
+export { importPuzzle, parsePuz } from './puz'
+export { encodePuz } from './puz-format'
+export { readPortableHtml, parsePortable, puzzleFilename } from './portable'
+export { clueScrollTop, desktopGridWidth, gridTypography } from './layout'

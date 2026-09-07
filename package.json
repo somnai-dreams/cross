@@ -1,7 +1,7 @@
 {
   "name": "@somnai-dreams/cross",
   "version": "0.1.0",
-  "description": "Portable HTML crosswords, native .puz compatibility, and typed ipuz documents",
+  "description": "Self-contained crossword files with an included player UI and optional headless format APIs",
   "type": "module",
   "license": "MIT",
   "repository": {
@@ -9,7 +9,9 @@
     "url": "https://github.com/somnai-dreams/cross.git"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./html": "./src/html.ts",
+    "./player": "./src/player/index.ts"
   },
   "files": [
     "src",
@@ -17,14 +19,18 @@
     "docs",
     "SPEC.md",
     "README.md",
-    "LICENSE"
+    "LICENSE",
+    "generated",
+    "scripts"
   ],
   "sideEffects": false,
   "scripts": {
     "tsc": "bun node_modules/@typescript/native/bin/tsgo",
-    "check": "bun run tsc --noEmit && bun --bun x oxlint --type-aware src test",
+    "check": "bun run tsc --noEmit && bun --bun x oxlint --type-aware src test scripts",
     "test": "bun test test",
-    "fixtures": "bun src/cli.ts"
+    "fixtures": "bun src/cli.ts",
+    "build:player": "bun scripts/build-player.ts",
+    "check:player": "bun scripts/build-player.ts --check"
   },
   "devDependencies": {
     "@types/bun": "1.4.1",
@@ -32,5 +38,8 @@
     "typescript": "5.9.3",
     "oxlint": "1.81.0",
     "oxlint-tsgolint": "7.0.2001"
+  },
+  "bin": {
+    "cross-html": "./src/html-cli.ts"
   }
 }

@@ -6,7 +6,7 @@ const puzzle: PuzData = {
   grid: ['CAT', 'ORE', 'DEN'], across: ['Pet that purrs', 'Rock containing metal', 'A fox’s home'],
   down: ['Fish often battered', 'You ___ here', 'Five doubled'], circles: [0],
 }
-const assets = { css: '@import url("https://example.com/font"); body { color: black }', script: 'document.title = "ACROSS&DOWN";' }
+const assets = { css: '@import url("https://example.com/font?wght=400;500;600"); body { color: black }', script: 'document.title = "ACROSS&DOWN";' }
 function value<T>(result: Result<T>): T {
   if (!result.ok) throw new Error(JSON.stringify(result.issue))
   return result.value
@@ -67,6 +67,7 @@ test('HTML and native paths read one payload; plain .puz export strips the wrapp
   expect(binary.length).toBeLessThan(file.length)
   expect(new TextDecoder().decode(file).startsWith('<!doctype html>')).toBe(true)
   expect(new TextDecoder().decode(file)).not.toContain('@import')
+  expect(new TextDecoder().decode(file)).toContain('<style id="player-style"> body { color: black }</style>')
   expect(value(writePuzHtml(value(readPuzHtml(file)), assets))).toEqual(file)
 })
 
