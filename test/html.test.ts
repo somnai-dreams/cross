@@ -99,7 +99,7 @@ test('the included UI accepts a 45x45 puzzle without needing a separate renderer
 })
 
 test('publisher CSS survives standalone re-export without repeating the styles or leaking its collection', async () => {
-  const css = ':root { --accent: #ac1234; --font: Georgia, serif } [data-cross-part="clue"] { padding: 4px }'
+  const css = ':scope { --accent: #ac1234; --font: Georgia, serif } [data-cross-part="clue"] { padding: 4px }'
   const html = value(await createCollectionHtml({
     puzzles: puzzleFiles.map(puzzle => ({ slug: puzzle.slug, puzzle })), defaultSlug: 'early-bird', title: 'Publisher', css,
   }))
@@ -133,4 +133,13 @@ test('embed import is inert and invalid puzzles fail before creating browser res
   // Bun has no DOM. Failure here must not access the host, document, or Blob URLs.
   const result = await mountPlayer({} as HTMLElement, new Uint8Array([1, 2, 3]))
   expect(result.ok).toBe(false)
+})
+
+
+test('embed validates progress and site options before touching the DOM', async () => {
+  const puzzle = puzzleFiles[0]!
+  const progress = newProgress(library[0]!.puzzle)
+  progress.fills[0]!.letter = 'X'
+  expect((await mountPlayer({} as HTMLElement, puzzle, { progress })).ok).toBe(false)
+  expect((await mountPlayer({} as HTMLElement, puzzle, { site: { name: 'Site', homeUrl: 'javascript:alert(1)' } })).ok).toBe(false)
 })

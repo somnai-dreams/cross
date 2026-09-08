@@ -1,14 +1,15 @@
-import { playerAssets } from '../generated/player'
+import { playerAssetsFor } from './player-assets'
+import { readInput, type HtmlPuzzle } from './player-input'
 import { fail, type Result } from './model'
-import { encodePuz, toBase64, type PuzData } from './puz'
-import { writePuzHtml, type PuzHtmlSnapshot } from './portable'
-import { parsePuz } from './player/puz'
-import { parsePuzzle, puzzleFile, type AuthoredPuzzle, type Puzzle } from './player/puzzle'
+import { toBase64 } from './puz'
+import { writePuzHtml } from './portable'
+import { puzzleFile, type Puzzle } from './player/puzzle'
 import { encodePuz as encodePlayerPuz } from './player/puz-format'
 import { parseProgress, progressFile, type Progress } from './player/engine'
 import { readConfiguration } from './player/config'
 
-export type HtmlPuzzle = Uint8Array | ArrayBuffer | AuthoredPuzzle | PuzData | PuzHtmlSnapshot['puzzle']
+export type { HtmlPuzzle } from './player-input'
+
 export type HtmlOptions = {
   progress?: Progress
   site?: { name: string; homeUrl: string }
@@ -24,19 +25,6 @@ export type CollectionOptions = {
   css?: string
 }
 
-async function readInput(input: HtmlPuzzle): Promise<Result<Puzzle>> {
-  if (input instanceof Uint8Array || input instanceof ArrayBuffer) {
-    const parsed = await parsePuz(new Uint8Array(input).buffer)
-    return parsed.ok ? parsed : fail('unsupported', '$.puzzle', parsed.error)
-  }
-  if ('version' in input) {
-    const parsed = parsePuzzle(input)
-    return parsed.ok ? parsed : fail('invalid-data', '$.puzzle', parsed.error)
-  }
-  const encoded = encodePuz(input)
-  return encoded.ok ? readInput(encoded.value) : encoded
-}
-
 function packagePuzzle(puzzle: Puzzle, options: HtmlOptions, configuration?: Parameters<typeof writePuzHtml>[2]): Result<Uint8Array<ArrayBuffer>> {
   const native = encodePlayerPuz(puzzle)
   if (!native.ok) return fail('unsupported', '$.puzzle', native.error)
@@ -47,7 +35,7 @@ function packagePuzzle(puzzle: Puzzle, options: HtmlOptions, configuration?: Par
   }
   return writePuzHtml({
     puzzle: { version: 2, id: puzzle.id, puz: toBase64(native.value), hints: puzzle.entries.map(entry => entry.clue.hint) }, progress,
-  }, { script: playerAssets.script, css: `${playerAssets.css}\n${options.css ?? ''}` }, { title: puzzle.title, ...configuration })
+  }, playerAssetsFor(options.css), { title: puzzle.title, ...configuration })
 }
 
 /** Produce a complete offline crossword with the included desktop/mobile UI. */
