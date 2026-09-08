@@ -28,15 +28,40 @@ It exports TypeScript source for Bun and TypeScript-capable bundlers. The includ
 
 ## Small, with the UI optional
 
-The included player script and minified CSS total about **78 KB raw / 25 KB gzipped**. A complete ordinary puzzle file is about **100–104 KB raw**, including the base64 player and both native puzzle copies. Gzip size is a transfer measurement, not the size of a downloaded HTML file. CI checks the bundle stays below 110 KB raw and 30 KB gzipped and that the committed bundle matches its source.
+The included player script and minified CSS total about **81 KB raw / 26 KB gzipped**. A complete ordinary puzzle file is about **100–104 KB raw**, including the base64 player and both native puzzle copies. Gzip size is a transfer measurement, not the size of a downloaded HTML file. CI checks the bundle stays below 110 KB raw and 30 KB gzipped and that the committed bundle matches its source.
 
 | Entry point | Provides |
 | --- | --- |
 | `@somnai-dreams/cross/html` | `createHtml` with the complete UI, plus `createCollectionHtml` for a puzzle collection |
 | `@somnai-dreams/cross` | Headless `.puz` and ipuz codecs, document identity, and answer-free verification; no UI bundle or DOM initialization |
 | `@somnai-dreams/cross/player` | Player data parsing, pure solving/navigation/progress operations, and file import; no DOM initialization |
+| `@somnai-dreams/cross/embed` | `mountPlayer` with the included UI in an isolated iframe, custom CSS, and explicit cleanup |
 
 The package contains the player source as well as its compiled bundle. Its state and DOM ownership follow the same engineering rules as the file library: parse inputs at their boundary, keep solving state serializable, process input in one ordered render loop, and keep cached DOM nodes outside that state. The [architecture and limits](docs/player.md) describe the actual implementation.
+
+## Use the player in your own site
+
+```ts
+import { mountPlayer } from '@somnai-dreams/cross/embed'
+
+const mounted = await mountPlayer(hostElement, puzzle, {
+  site: { name: 'My crosswords', homeUrl: 'https://example.com/' },
+  css: `
+    :root { --accent: #87512b; --word: #f6e7d8; --font: Arial, sans-serif; }
+    [data-cross-part="clue"] { border-radius: 0; }
+  `,
+})
+if (!mounted.ok) throw new Error(mounted.issue.message)
+
+// When the host view is removed:
+mounted.value.destroy()
+```
+
+Give the host an explicit height, such as `height: 80svh; min-height: 600px`. The frame fills it. Each player gets its own document, so styles and input handling stay inside the frame. The default embedded view omits the site header; pass `chrome: 'full'` to include it. The puzzle controls remain available, including file opening in the save dialog.
+
+The same `css` option works with `createHtml` and `createCollectionHtml`. It is appended after the default styles and travels with every playable HTML download, including downloads made inside the player. Downloaded files restore the full header and retain publisher branding. Ordinary `.puz` exports contain puzzle data only.
+
+See [styling and embedding](docs/player.md#styling-and-embedding) for the supported CSS hooks. Structural and accessibility styles remain included; a bare component kit is outside this API.
 
 ## Inputs and exports
 

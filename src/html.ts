@@ -9,12 +9,19 @@ import { parseProgress, progressFile, type Progress } from './player/engine'
 import { readConfiguration } from './player/config'
 
 export type HtmlPuzzle = Uint8Array | ArrayBuffer | AuthoredPuzzle | PuzData | PuzHtmlSnapshot['puzzle']
-export type HtmlOptions = { progress?: Progress; site?: { name: string; homeUrl: string } }
+export type HtmlOptions = {
+  progress?: Progress
+  site?: { name: string; homeUrl: string }
+  /** Trusted publisher CSS, appended after the included styles and carried through HTML downloads. */
+  css?: string
+  chrome?: 'full' | 'puzzle'
+}
 export type CollectionOptions = {
   puzzles: { slug: string; puzzle: HtmlPuzzle }[]
   defaultSlug: string
   title?: string
   storageKey?: string
+  css?: string
 }
 
 async function readInput(input: HtmlPuzzle): Promise<Result<Puzzle>> {
@@ -40,15 +47,15 @@ function packagePuzzle(puzzle: Puzzle, options: HtmlOptions, configuration?: Par
   }
   return writePuzHtml({
     puzzle: { version: 2, id: puzzle.id, puz: toBase64(native.value), hints: puzzle.entries.map(entry => entry.clue.hint) }, progress,
-  }, playerAssets, { title: puzzle.title, ...configuration })
+  }, { script: playerAssets.script, css: `${playerAssets.css}\n${options.css ?? ''}` }, { title: puzzle.title, ...configuration })
 }
 
 /** Produce a complete offline crossword with the included desktop/mobile UI. */
 export async function createHtml(input: HtmlPuzzle, options: HtmlOptions = {}): Promise<Result<Uint8Array<ArrayBuffer>>> {
   const parsed = await readInput(input)
   if (!parsed.ok) return parsed
-  if (options.site === undefined) return packagePuzzle(parsed.value, options)
-  const configuration = { version: 1, brand: options.site.name, homeUrl: options.site.homeUrl, storageKey: 'cross', mode: 'standalone', library: [] }
+  if (options.site === undefined && options.chrome === undefined) return packagePuzzle(parsed.value, options)
+  const configuration = { version: 1, brand: options.site?.name ?? 'Cross', homeUrl: options.site?.homeUrl ?? null, storageKey: 'cross', mode: 'standalone', library: [], chrome: options.chrome ?? 'full' }
   const checked = readConfiguration(JSON.stringify(configuration), parsed.value)
   return checked.ok ? packagePuzzle(parsed.value, options, { configuration }) : fail('invalid-data', '$.site', checked.error)
 }
@@ -67,5 +74,5 @@ export async function createCollectionHtml(options: CollectionOptions): Promise<
   const configuration = { version: 1, brand: options.title ?? 'Cross', storageKey: options.storageKey ?? 'cross', mode: 'collection', library }
   const checked = readConfiguration(JSON.stringify(configuration), initial)
   if (!checked.ok) return fail('invalid-data', '$.collection', checked.error)
-  return packagePuzzle(initial, {}, { configuration })
+  return packagePuzzle(initial, { css: options.css ?? '' }, { configuration })
 }

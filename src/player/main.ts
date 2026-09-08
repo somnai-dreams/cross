@@ -72,37 +72,38 @@ const { puzzleHistory, puzzlePath, resolvePuzzleLocation } = createNavigation(li
 // Static asset references have the lifetime of this document, outside solving state.
 const embeddedScript = document.querySelector<HTMLScriptElement>('#player-code')
 const embeddedStyle = document.querySelector<HTMLStyleElement>('#player-style')
+app.dataset['chrome'] = configuration.chrome
 app.innerHTML = `
-  <header class="site-header">
+  <header class="site-header" data-cross-part="header"${configuration.chrome === "puzzle" ? " hidden" : ""}>
     <a class="brand" href="/" aria-label="Crossword home"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="brand-name"></span><span class="brand-period">.</span></a>
     <nav aria-label="Puzzle navigation"><button class="text-button library-button" data-command="panel:library" aria-label="Puzzles">${icon('grid')}<span>Puzzles</span></button><span class="nav-divider"></span><button class="text-button" data-command="import" aria-label="Open puzzle">${icon('upload')}<span>Open puzzle</span></button><button class="icon-button" data-command="panel:help" aria-label="How to play">${icon('help')}</button></nav>
   </header>
-  <main class="workspace">
-    <section class="puzzle-heading" aria-labelledby="puzzle-title"><div><div id="puzzle-size" class="eyebrow"></div><h1 id="puzzle-title"></h1><p class="byline">By <span id="puzzle-author"></span><span class="byline-separator">·</span><span id="puzzle-description"></span></p></div><div class="puzzle-heading-actions"><button id="copy-link" class="text-button" data-command="copy-link" aria-label="Copy puzzle link">${icon('link',18)}<span>Copy link</span></button><button class="icon-button" data-command="panel:download" aria-label="Save puzzle" title="Save puzzle">${icon('upload')}</button><button class="icon-button settings-top" data-command="panel:settings" aria-label="Player settings">${icon('settings')}</button></div></section>
-    <div class="game-toolbar"><div class="solve-stats"><button id="timer-button" class="timer-button" data-command="pause" aria-label="Pause puzzle"><span id="timer-icon">${icon('pause',16)}</span><span id="timer">0:00</span></button><span class="toolbar-divider"></span><span id="progress-label">0 / 21</span></div><div class="tools"><button id="pencil" aria-label="Pencil mode" class="tool-button" data-command="pencil" aria-pressed="false">${icon('pencil',18)}<span>Pencil</span></button><button class="tool-button" aria-label="Check answers" data-command="panel:check">${icon('check',18)}<span>Check</span></button><button class="tool-button" aria-label="Reveal answers" data-command="panel:reveal">${icon('eye',18)}<span>Reveal</span></button><button class="icon-button settings-mobile" data-command="panel:settings" aria-label="Player settings">${icon('settings',18)}</button></div></div>
-    <div class="play-layout">
+  <main class="workspace" data-cross-part="workspace">
+    <section class="puzzle-heading" data-cross-part="heading" aria-labelledby="puzzle-title"><div><div id="puzzle-size" class="eyebrow"></div><h1 id="puzzle-title"></h1><p class="byline">By <span id="puzzle-author"></span><span class="byline-separator">·</span><span id="puzzle-description"></span></p></div><div class="puzzle-heading-actions"><button id="copy-link" class="text-button" data-command="copy-link" aria-label="Copy puzzle link">${icon('link',18)}<span>Copy link</span></button><button class="icon-button" data-command="panel:download" aria-label="Save puzzle" title="Save puzzle">${icon('upload')}</button><button class="icon-button settings-top" data-command="panel:settings" aria-label="Player settings">${icon('settings')}</button></div></section>
+    <div class="game-toolbar" data-cross-part="toolbar"><div class="solve-stats"><button id="timer-button" class="timer-button" data-command="pause" aria-label="Pause puzzle"><span id="timer-icon">${icon('pause',16)}</span><span id="timer">0:00</span></button><span class="toolbar-divider"></span><span id="progress-label">0 / 21</span></div><div class="tools"><button id="pencil" aria-label="Pencil mode" class="tool-button" data-command="pencil" aria-pressed="false">${icon('pencil',18)}<span>Pencil</span></button><button class="tool-button" aria-label="Check answers" data-command="panel:check">${icon('check',18)}<span>Check</span></button><button class="tool-button" aria-label="Reveal answers" data-command="panel:reveal">${icon('eye',18)}<span>Reveal</span></button><button class="icon-button settings-mobile" data-command="panel:settings" aria-label="Player settings">${icon('settings',18)}</button></div></div>
+    <div class="play-layout" data-cross-part="layout">
       <section class="board-column" aria-label="Crossword puzzle">
-        <div class="active-clue desktop-clue"><span id="clue-label" class="clue-badge"></span><p id="clue-text"></p><span id="clue-length" class="clue-length"></span><button class="icon-button" data-command="toggle-direction" aria-label="Switch across or down">${icon('swap',18)}</button></div>
-        <div class="grid-space"><div class="board-wrap"><div id="board" class="board" role="grid" tabindex="0" aria-label="Crossword grid. Type letters; arrows move; Space changes direction; Tab changes clue; Escape leaves the grid."></div><div id="pause-cover" class="pause-cover" hidden><span class="pause-symbol">${icon('pause',36)}</span><h2>A little breather.</h2><p>Your puzzle will be right here.</p><button class="primary-button" data-command="resume">${icon('play',18)}Resume puzzle</button></div></div><div class="grid-details">
+        <div class="active-clue desktop-clue" data-cross-part="active-clue"><span id="clue-label" class="clue-badge"></span><p id="clue-text"></p><span id="clue-length" class="clue-length"></span><button class="icon-button" data-command="toggle-direction" aria-label="Switch across or down">${icon('swap',18)}</button></div>
+        <div class="grid-space"><div class="board-wrap"><div id="board" class="board" data-cross-part="grid" role="grid" tabindex="0" aria-label="Crossword grid. Type letters; arrows move; Space changes direction; Tab changes clue; Escape leaves the grid."></div><div id="pause-cover" class="pause-cover" hidden><span class="pause-symbol">${icon('pause',36)}</span><h2>Paused</h2><button class="primary-button" data-command="resume">${icon('play',18)}Resume puzzle</button></div></div><div class="grid-details">
         <div class="board-caption"><span id="save-status"><span class="status-dot"></span>Saved on this device</span><div class="board-caption-tools"><button id="zoom-button" class="text-button mobile-list-button" data-command="zoom" aria-pressed="false">Zoom grid</button><button class="text-button mobile-list-button" data-command="panel:clues">All clues</button></div><button class="text-button desktop-shortcuts" data-command="panel:help">Shortcuts <span aria-hidden="true">↗</span></button></div>
-        <div id="hint-card" class="hint-card"><div class="hint-heading">${icon('bulb',19)}<span>A fresh way in</span></div><p id="hint-text">Stuck on a clue? Get a nudge without revealing the answer.</p><button id="hint-button" class="hint-button" data-command="hint">Get a hint <span aria-hidden="true">↗</span></button></div>
+        <div id="hint-card" class="hint-card"><div class="hint-heading">${icon('bulb',19)}<span>Hint</span></div><p id="hint-text">Stuck on a clue? Get a nudge without revealing the answer.</p><button id="hint-button" class="hint-button" data-command="hint">Get a hint <span aria-hidden="true">↗</span></button></div>
         </div></div>
       </section>
-      <section id="clue-lists" class="clue-lists" aria-label="Clues"><div class="clue-column"><h2><span>Across</span><span class="direction-arrow" aria-hidden="true">→</span></h2><div id="across-clues" class="clue-scroll"></div></div><div class="clue-column"><h2><span>Down</span><span class="direction-arrow" aria-hidden="true">↓</span></h2><div id="down-clues" class="clue-scroll"></div></div></section>
+      <section id="clue-lists" class="clue-lists" data-cross-part="clues" aria-label="Clues"><div class="clue-column"><h2><span>Across</span><span class="direction-arrow" aria-hidden="true">→</span></h2><div id="across-clues" class="clue-scroll"></div></div><div class="clue-column"><h2><span>Down</span><span class="direction-arrow" aria-hidden="true">↓</span></h2><div id="down-clues" class="clue-scroll"></div></div></section>
     </div>
   </main>
-  <div class="mobile-dock"><div class="mobile-clue"><button class="icon-button" data-command="previous" aria-label="Previous clue">${icon('left')}</button><button id="mobile-clue-switch" class="mobile-clue-content" data-command="toggle-direction"><span id="mobile-clue-label"></span><span id="mobile-clue-text"></span></button><button class="icon-button" data-command="next" aria-label="Next clue">${icon('right')}</button></div><div id="keyboard" class="keyboard" aria-label="On-screen keyboard"></div><div class="mobile-hint"><button class="text-button" data-command="hint">${icon('bulb',15)}A little hint</button><span id="mobile-save-status">Saved on this device</span></div></div>
-  <dialog id="dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title"></h2><button class="icon-button" data-command="close" aria-label="Close dialog">${icon('close')}</button></div>
+  <div class="mobile-dock" data-cross-part="mobile-dock"><div class="mobile-clue"><button class="icon-button" data-command="previous" aria-label="Previous clue">${icon('left')}</button><button id="mobile-clue-switch" class="mobile-clue-content" data-command="toggle-direction"><span id="mobile-clue-label"></span><span id="mobile-clue-text"></span></button><button class="icon-button" data-command="next" aria-label="Next clue">${icon('right')}</button></div><div id="keyboard" class="keyboard" data-cross-part="keyboard" aria-label="On-screen keyboard"></div><div class="mobile-hint"><button class="text-button" data-command="hint">${icon('bulb',15)}Hint</button><span id="mobile-save-status">Saved on this device</span></div></div>
+  <dialog id="dialog" data-cross-part="dialog" aria-labelledby="dialog-title"><div class="dialog-header"><h2 id="dialog-title"></h2><button class="icon-button" data-command="close" aria-label="Close dialog">${icon('close')}</button></div>
     <section id="clue-panel" class="clue-panel" data-panel="clues"></section>
     <section data-panel="library"><p id="library-intro" class="dialog-intro">Pick a puzzle, or bring one of your own.</p><div id="puzzle-library"></div><button class="secondary-button wide" data-command="import">${icon('upload')}Open .puz, HTML, or crossword JSON</button><p class="dialog-note">Files stay on your device.</p></section>
-    <section data-panel="download"><p class="dialog-intro">Keep this crossword as a file you can open and share.</p><div class="scope-buttons"><button data-command="download:puz">Download .puz</button><button data-command="download:html">Download playable HTML</button><button data-command="download:progress">HTML with my progress</button></div><p class="dialog-note">HTML includes the player and works offline, using your system fonts. Open it in a browser to play or load another .puz.</p><p class="dialog-note">Experimental: the HTML file can also be renamed to .puz for readers such as puzpy that search for its puzzle header. Use Download .puz for other apps.</p><p class="dialog-note">The .puz download preserves an imported file as supplied. Your progress in this player is included only in HTML with my progress.</p></section>
+    <section data-panel="download"><button class="secondary-button wide" data-command="import">Open another puzzle</button><div class="scope-buttons"><button data-command="download:puz">Download .puz</button><button data-command="download:html">Download playable HTML</button><button data-command="download:progress">HTML with my progress</button></div><p class="dialog-note">HTML includes the player and works offline, using your system fonts. Open it in a browser to play or load another .puz.</p><p class="dialog-note">Experimental: the HTML file can also be renamed to .puz for readers such as puzpy that search for its puzzle header. Use Download .puz for other apps.</p><p class="dialog-note">The .puz download preserves an imported file as supplied. Your progress in this player is included only in HTML with my progress.</p></section>
     <section data-panel="share"><p class="dialog-intro">Copy this link to share the puzzle. Each person keeps their own progress.</p><input id="share-link" class="share-link" type="url" readonly aria-label="Puzzle link"><p class="dialog-note">Automatic copying is unavailable. Select and copy the link above.</p></section>
     <section data-panel="help"><p class="dialog-intro">Select a square and start typing. Select it again to switch between across and down.</p><dl class="shortcuts"><div><dt>Arrow keys</dt><dd>Change direction, then move</dd></div><div><dt>Space / Enter</dt><dd>Switch across and down</dd></div><div><dt>Tab / Shift Tab</dt><dd>Next / previous clue</dd></div><div><dt>Backspace</dt><dd>Erase, then move back</dd></div><div><dt>Escape</dt><dd>Leave the grid for other controls</dd></div></dl><p class="dialog-intro">On a phone, use the keyboard below the grid. Tap the clue to change direction, or the arrows to choose another clue.</p><p class="dialog-note">Hints offer another way to think about a clue. Check marks incorrect letters; Reveal fills in an answer. All are here to help.</p></section>
     <section data-panel="settings"><div class="setting"><div><strong>Skip filled squares</strong><p>Move to the next empty square as you type.</p></div><button class="switch" role="switch" data-command="setting:skipFilled" aria-label="Skip filled squares"></button></div><div class="setting"><div><strong>Advance to the next clue</strong><p>Keep going when an answer is filled.</p></div><button class="switch" role="switch" data-command="setting:advanceWord" aria-label="Advance to the next clue"></button></div><div class="setting"><div><strong>Show timer</strong><p>For when you like to keep track.</p></div><button class="switch" role="switch" data-command="setting:showTimer" aria-label="Show timer"></button></div><button class="secondary-button wide" data-command="panel:restart">Start over</button></section>
     <section data-panel="check"><p class="dialog-intro">Incorrect letters get a small red mark. Nothing is erased.</p><div class="scope-buttons"><button data-command="check:cell">Check square</button><button data-command="check:word">Check word</button><button data-command="check:puzzle">Check puzzle</button></div></section>
     <section data-panel="reveal"><p class="dialog-intro">Fill in the solution for a square, a word, or the whole puzzle. Revealed letters keep a small blue corner.</p><div class="scope-buttons"><button data-command="reveal:cell">Reveal square</button><button data-command="reveal:word">Reveal word</button><button data-command="reveal:puzzle">Reveal puzzle…</button></div><div id="reveal-confirm" hidden><p>Reveal every remaining answer?</p><button class="primary-button wide" data-command="reveal-all-confirmed">Reveal the full puzzle</button></div></section>
     <section data-panel="restart"><p class="dialog-intro">Clear your letters and reset the timer for this puzzle?</p><button class="primary-button wide" data-command="restart">Start fresh</button><button class="text-button wide" data-command="close">Keep solving</button></section>
-    <section data-panel="complete" class="completion"><div class="completion-mark">${icon('check',38)}</div><p class="completion-kicker">EVERYTHING CLICKS.</p><h3>Nicely done.</h3><p id="completion-detail"></p><button class="primary-button wide" data-command="next-puzzle">Another puzzle ${icon('right',18)}</button><button class="text-button wide" data-command="close">Enjoy the finished grid</button></section>
+    <section data-panel="complete" class="completion"><div class="completion-mark">${icon('check',38)}</div><h3>Puzzle complete</h3><p id="completion-detail"></p><button class="primary-button wide" data-command="next-puzzle">Another puzzle ${icon('right',18)}</button><button class="text-button wide" data-command="close">Close</button></section>
   </dialog>
   <input id="puzzle-file" type="file" accept=".puz,.html,.htm,.json" hidden>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
@@ -354,7 +355,7 @@ function buildPuzzleDom(): void {
       const index = row * puzzle.width + col
       const cell = puzzle.cells[index]!
       const node = document.createElement('div')
-      node.id = `cell-${index}`; node.dataset['cell'] = String(index)
+      node.id = `cell-${index}`; node.dataset['cell'] = String(index); node.dataset['crossPart'] = 'cell'
       node.setAttribute('role', 'gridcell'); node.setAttribute('aria-colindex', String(col + 1))
       node.setAttribute('aria-rowindex', String(row + 1))
       const number = document.createElement('span')
@@ -373,7 +374,7 @@ function buildPuzzleDom(): void {
   for (let i = 0; i < puzzle.entries.length; i++) {
     const entry = puzzle.entries[i]!
     const button = document.createElement('button')
-    button.className = 'clue-row'; button.dataset['entry'] = String(i)
+    button.className = 'clue-row'; button.dataset['entry'] = String(i); button.dataset['crossPart'] = 'clue'
     const number = document.createElement('span'); number.className = 'clue-number'; number.textContent = String(entry.number)
     const text = document.createElement('span'); text.className = 'clue-copy'; text.textContent = entry.clue.text
     const length = document.createElement('span'); length.className = 'entry-length'; length.textContent = String(entry.cells.length)
@@ -550,7 +551,7 @@ function render(now: number): void {
     }
   }
   for (const panel of dom.panels) panel.hidden = panel.dataset['panel'] !== st.panel
-  const panelNames = { library: 'Puzzles', help: 'How to play', settings: 'Settings', check: 'Check answers', reveal: 'Reveal answers', restart: 'Start this puzzle over?', complete: 'Puzzle complete', share: 'Share this puzzle', clues: 'All clues', download: 'Save puzzle' }
+  const panelNames = { library: 'Puzzles', help: 'How to play', settings: 'Settings', check: 'Check answers', reveal: 'Reveal answers', restart: 'Start this puzzle over?', complete: 'Puzzle complete', share: 'Share this puzzle', clues: 'All clues', download: 'Puzzle files' }
   dom.dialogTitle.textContent = st.panel === null ? '' : panelNames[st.panel]
   required('#reveal-confirm', HTMLDivElement).hidden = !st.revealConfirm
   dom.completionDetail.textContent = `You finished ${puzzle.title}${st.preferences.showTimer ? ` in ${time}` : ''}.${progress.assisted ? ' With a little help along the way.' : ''}`
@@ -569,7 +570,7 @@ function render(now: number): void {
   if (st.panel === 'clues' && previousPanel !== 'clues') dom.clues[selectedEntry]!.scrollIntoView({ block: 'center', behavior: 'instant' })
   if (selectShareLink) { dom.shareLink.focus(); dom.shareLink.select(); selectShareLink = false }
   if (focusBoard && st.panel === null && st.mode !== 'paused') dom.board.focus({ preventScroll: true })
-  if (leaveGrid) required('[data-command="import"]', HTMLButtonElement).focus({ preventScroll: true })
+  if (leaveGrid) required('[data-command="panel:download"]', HTMLButtonElement).focus({ preventScroll: true })
   if (previousEntry !== entry) dom.clueText.scrollTop = 0
   if (puzzleChanged) { dom.across.scrollTop = 0; dom.down.scrollTop = 0 }
   if (nextClueScroll !== null) cluePane.scrollTo({ top: nextClueScroll, behavior: 'instant' })
@@ -658,6 +659,12 @@ window.addEventListener('popstate', event => dispatch({ type: 'navigate', search
 void document.fonts.ready.then(schedule)
 document.addEventListener('visibilitychange', () => dispatch({ type: 'visibility', hidden: document.hidden }))
 window.addEventListener('pagehide', () => save(performance.now()))
+window.addEventListener('cross:save', () => {
+  const now = performance.now()
+  if (scheduled !== null) cancelAnimationFrame(scheduled)
+  render(now)
+  save(now)
+})
 dom.file.addEventListener('change', () => {
   const file = dom.file.files?.[0]
   if (file === undefined) return
@@ -739,7 +746,7 @@ async function downloadPuzzle(selected: Puzzle, kind: 'puz' | 'html' | 'progress
       const prefix = 'data:text/javascript;base64,'
       if (!embeddedScript.src.startsWith(prefix)) throw new Error('Missing embedded player code')
       const assets: PlayerAssets = { css: embeddedStyle.textContent, script: new TextDecoder().decode(fromBase64(embeddedScript.src.slice(prefix.length))) }
-      const result = portableHtml(selected, snapshot, assets)
+      const result = portableHtml(selected, snapshot, assets, { brand, homeUrl: configuration.homeUrl, storageKey })
       if (!result.ok) { dispatch({ type: 'error', message: result.error }); return }
       bytes = result.value
     }

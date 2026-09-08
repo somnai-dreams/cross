@@ -1,7 +1,7 @@
 :root {
-  font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  color:#212636;
-  background:#f8f9fc;
+  font-family:var(--font,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif);
+  color:var(--ink);
+  background:var(--background,#f8f9fc);
   font-synthesis:none;
   -webkit-font-smoothing:antialiased;
   --ink:#212636;
@@ -203,7 +203,7 @@ h1,h2,h3,p {
 }
 
 h1 {
-  font-family:Georgia,'Times New Roman',serif;
+  font-family:var(--heading-font,Georgia,'Times New Roman',serif);
   font-size:28px;
   font-weight:500;
   letter-spacing:-.5px;
@@ -380,7 +380,7 @@ h1 {
 
 .cell {
   position:relative;
-  background:#fff;
+  background:var(--surface,#fff);
   display:flex;
   align-items:center;
   justify-content:center;
@@ -631,7 +631,7 @@ h1 {
 }
 
 .pause-cover h2 {
-  font-family:Georgia,'Times New Roman',serif;
+  font-family:var(--heading-font,Georgia,'Times New Roman',serif);
   font-size:34px;
   font-weight:500
 }
@@ -685,7 +685,7 @@ dialog {
   max-width:min(470px,calc(100vw - 32px));
   width:470px;
   padding:26px;
-  background:#fff;
+  background:var(--surface,#fff);
   color:var(--ink);
   box-shadow:0 24px 80px #14183935;
   max-height:calc(100dvh - 40px);
@@ -740,7 +740,7 @@ dialog::backdrop {
 }
 
 .dialog-header h2 {
-  font-family:Georgia,'Times New Roman',serif;
+  font-family:var(--heading-font,Georgia,'Times New Roman',serif);
   font-size:28px;
   font-weight:500;
   letter-spacing:-.5px
@@ -823,7 +823,7 @@ dialog::backdrop {
   width:20px;
   height:20px;
   border-radius:50%;
-  background:#fff;
+  background:var(--surface,#fff);
   box-shadow:0 1px 3px #0002;
   transition:transform 120ms
 }
@@ -938,7 +938,7 @@ dialog::backdrop {
 }
 
 .completion h3 {
-  font-family:Georgia,'Times New Roman',serif;
+  font-family:var(--heading-font,Georgia,'Times New Roman',serif);
   font-size:44px;
   font-weight:500
 }
@@ -1272,7 +1272,7 @@ html {
     height:44px;
     flex:1;
     max-width:48px;
-    background:#fff;
+    background:var(--surface,#fff);
     border-radius:5px;
     font-family:system-ui,sans-serif;
     font-size:18px;
@@ -1317,4 +1317,8 @@ html {
   .puzzle-heading h1 { font-size:20px; }
   .key-row { gap:4px; }
   .board-caption-tools { gap:4px; }
+}
+
+@media (min-width:761px) {
+  #app[data-chrome="puzzle"] { grid-template-rows:minmax(0,1fr); }
 }

@@ -4,6 +4,8 @@ import { decodePuz, puzPayload, fromBase64 } from '../src'
 import { readPortableHtml } from '../src/player/portable'
 import { readConfiguration } from '../src/player/config'
 import { newProgress } from '../src/player/engine'
+import { portableHtml } from '../src/player/portable'
+import { mountPlayer } from '../src/embed'
 import { library, puzzleFiles } from './player/fixtures'
 
 function value<T>(result: { ok: true; value: T } | { ok: false }): T {
@@ -94,4 +96,41 @@ test('the included UI accepts a 45x45 puzzle without needing a separate renderer
   const large = { version: 1 as const, id: 'large', title: 'Large grid', author: 'Synthetic', grid: Array<string>(45).fill('A'.repeat(45)), across: Array<string>(45).fill('Across'), down: Array<string>(45).fill('Down') }
   const html = value(await createHtml(large))
   expect(value(readPortableHtml(html)).puzzle.width).toBe(45)
+})
+
+test('publisher CSS survives standalone re-export without repeating the styles or leaking its collection', async () => {
+  const css = ':root { --accent: #ac1234; --font: Georgia, serif } [data-cross-part="clue"] { padding: 4px }'
+  const html = value(await createCollectionHtml({
+    puzzles: puzzleFiles.map(puzzle => ({ slug: puzzle.slug, puzzle })), defaultSlug: 'early-bird', title: 'Publisher', css,
+  }))
+  const text = new TextDecoder().decode(html)
+  const style = /<style id="player-style">([\s\S]*?)<\/style>/.exec(text)![1]!
+  const script = new TextDecoder().decode(fromBase64(/src="data:text\/javascript;base64,([^"]+)"/.exec(text)![1]!))
+  const parsed = value(readPortableHtml(html))
+  const publisher = { brand: 'Publisher', homeUrl: 'https://example.com/puzzles/', storageKey: 'cross' }
+  const exported = value(portableHtml(parsed.puzzle, null, { css: style, script }, publisher))
+  const reopened = new TextDecoder().decode(exported)
+  expect(reopened.match(/--accent: #ac1234/g)).toHaveLength(1)
+  expect(reopened).toContain(css)
+  const config = /<script id="crossword-config" type="application\/json">(.*?)<\/script>/.exec(reopened)![1]!
+  expect(value(readConfiguration(config, parsed.puzzle))).toEqual({ ...publisher, mode: 'standalone', chrome: 'full', library: [] })
+  expect(puzPayload(exported)).toEqual(puzPayload(html))
+})
+
+test('CSS text cannot terminate its HTML element and change the portable envelope', async () => {
+  const css = '[data-cross-part="heading"]::after { content: "</style><script>alert(1)</script>" }'
+  const html = value(await createHtml(puzzleFiles[0]!, { css, chrome: 'puzzle' }))
+  const text = new TextDecoder().decode(html)
+  expect(text).not.toContain('</style><script>alert(1)</script>')
+  expect(text).toContain('\\3c /style>\\3c script>alert(1)\\3c /script>')
+  expect(value(readPortableHtml(html)).puzzle.entries).toEqual(library[0]!.puzzle.entries)
+  const config = /<script id="crossword-config" type="application\/json">(.*?)<\/script>/.exec(text)![1]!
+  expect(value(readConfiguration(config, library[0]!.puzzle)).chrome).toBe('puzzle')
+  expect(readConfiguration(config.replace('"chrome":"puzzle"', '"chrome":"unknown"'), library[0]!.puzzle).ok).toBe(false)
+})
+
+test('embed import is inert and invalid puzzles fail before creating browser resources', async () => {
+  // Bun has no DOM. Failure here must not access the host, document, or Blob URLs.
+  const result = await mountPlayer({} as HTMLElement, new Uint8Array([1, 2, 3]))
+  expect(result.ok).toBe(false)
 })

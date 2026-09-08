@@ -58,7 +58,8 @@ export function writePuzHtml(snapshot: PuzHtmlSnapshot, assets: PlayerAssets, op
   const config = options.configuration === undefined ? '' : '<script id="crossword-config" type="application/json">' + JSON.stringify(options.configuration).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026') + '</script>'
   const json = JSON.stringify(checked.value).replaceAll('<', '\\u003c').replaceAll('>', '\\u003e').replaceAll('&', '\\u0026')
   const script = toBase64(new TextEncoder().encode(assets.script))
-  const css = assets.css.replace(/@import\s+(?:url\((?:"[^"]*"|'[^']*'|[^)]*)\)|"[^"]*"|'[^']*')[^;]*;/gi, '')
+  // CSS is publisher code, but its text must never close the HTML style element.
+  const css = assets.css.replace(/@import\s+(?:url\((?:"[^"]*"|'[^']*'|[^)]*)\)|"[^"]*"|'[^']*')[^;]*;/gi, '').replaceAll('<', '\\3c ')
   const prefix = new TextEncoder().encode(`<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#f8f9fc"><title>${title}</title><style id="player-style">${css}</style></head>
 <body><div id="app"></div>${config}${marker}${json}</script><script id="player-code" type="module" src="data:text/javascript;base64,${script}"></script>

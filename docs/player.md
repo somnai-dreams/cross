@@ -6,8 +6,10 @@ The UI is a core part of Cross. The normal `createHtml(puzzle)` path provides it
 
 `@somnai-dreams/cross/html` exports:
 
-- `createHtml(input, { progress? })`: a promise of a structured result containing the complete HTML bytes.
-- `createCollectionHtml({ puzzles, defaultSlug, title?, storageKey? })`: the same included player with a validated collection and stable puzzle links.
+- `createHtml(input, { progress?, site?, css?, chrome? })`: a promise of a structured result containing the complete HTML bytes. `site` supplies `{ name, homeUrl }`; `chrome` is `full` (default) or `puzzle` (no site header).
+- `createCollectionHtml({ puzzles, defaultSlug, title?, storageKey?, css? })`: the same included player with a validated collection and stable puzzle links.
+
+`@somnai-dreams/cross/embed` exports `mountPlayer(host, input, options?)`. It accepts the same inputs/options, defaults to puzzle-only chrome, and returns a structured result containing `{ frame, destroy }`. Importing it creates no DOM. The result means the frame has been inserted; the browser loads its document asynchronously.
 
 Input is a native `Uint8Array`, `PuzData`, an authored puzzle, or a version-2 native snapshot. Native input retains its validated original bytes. Authored data uses:
 
@@ -34,6 +36,7 @@ This first included UI supports connected 3–64 rectangular grids with A–Z fi
 | Source | Responsibility |
 | --- | --- |
 | `src/html.ts` | Turn a caller's puzzle into a complete playable file using the included assets |
+| `src/embed.ts` | Mount that same file in a Blob-backed iframe and release it on destroy |
 | `src/player/puzzle.ts`, `engine.ts` | Validated player model and pure solving/progress operations |
 | `src/player/main.ts` | One document's UI, input queue, ordered projection, and browser side effects |
 | `src/player/style.css` | Responsive desktop/mobile presentation using system fonts |
@@ -58,7 +61,21 @@ Both desktop and mobile offer **Zoom grid / Fit grid**. Fit shows the whole grid
 
 Local progress is tied to exact puzzle content, not only its ID. The storage namespace defaults to `cross`; a collection can select a namespace to retain its existing persistence. A standalone file always boots its embedded puzzle. Restored browser-local progress takes precedence on subsequent openings; an explicit HTML import's validated progress takes precedence when loaded. Saving creates a download, never an in-place file rewrite.
 
-This is a complete-document player, not yet a multi-instance embedded widget with mount/destroy lifecycle. A self-contained file owns its document. Headless consumers can reuse the pure data/engine APIs in another interface.
+The browser embed mounts the complete document in an iframe. Each instance has its own input queue, focus, dialogs, scrolling and timers. `destroy()` flushes pending progress, removes the frame, and revokes its Blob URL; destroying it twice is harmless. The host owns sizing and calls destroy before removing its view. Progress for the same puzzle still shares the browser's normal storage, so changing presentation does not reset a solve.
+
+## Styling and embedding
+
+Supply `css` from trusted application code. It is never read from imported puzzle metadata. The iframe provides the style boundary: your site stylesheet does not enter the player, and the player's stylesheet does not affect your site. Use the `css` option for player styling and `.cross-frame` or the returned frame for host sizing.
+
+The supported color variables are `--ink`, `--muted`, `--line`, `--accent`, `--word`, `--selected`, `--background`, and `--surface`. `--font` sets the UI font; `--heading-font` sets the desktop heading font. Mobile headings retain the UI font. Supply variables on `:root` in the player CSS.
+
+Stable selectors use `data-cross-part`: `header`, `workspace`, `heading`, `toolbar`, `layout`, `active-clue`, `grid`, `cell`, `clues`, `clue`, `mobile-dock`, `keyboard`, and `dialog`. Cells expose the state classes `block`, `selected`, `word-selected`, `pencilled`, `incorrect`, and `revealed`. Clue rows use `active` and `filled`. Other classes are implementation details.
+
+Use those hooks for typography, colors, corner treatment, and clue spacing. Cross owns grid tracks, grid gap/border widths, letter positioning, hidden states, and focus behavior. Its responsive layout follows the frame's width, so a narrow embed uses the phone interface even on a desktop. Frame height is controlled by the host; there is no auto-height message protocol or separate rendering framework.
+
+Custom CSS is embedded once with the included stylesheet. Re-export preserves that combined stylesheet, the publisher name/home link, and an explicitly requested progress snapshot. It drops the collection and restores full chrome so the downloaded file stands alone. CSS text is escaped so it cannot close the HTML style element. External `@import` rules are removed; use system fonts or inline data assets if the file must work offline. Other CSS resource URLs remain the publisher's responsibility.
+
+The iframe is an application boundary, not a security sandbox for arbitrary HTML. `mountPlayer` accepts parsed crossword formats through `createHtml`, not executable imported HTML. Hosts with a content security policy must permit the Blob frame and the included data-URL module script.
 
 ## Verification
 
@@ -66,4 +83,4 @@ Public tests exercise the supplied-UI API without passing assets, the extracted 
 
 The consumer's two minis and two 15×15 puzzles retain cell/clue identity through the new API. All four generated HTML files pass puzpy 0.6.0 checksum and literal-rename round trips, preserving the entire HTML preamble and native payload.
 
-Browser verification of the generated file covers startup, desktop typing, progress after reload, the save options, a 390×844 mobile viewport, touch-key entry, the clue dialog, and a collection deep link. The extracted stylesheet uses system fonts throughout; a regression test covers semicolons inside an external CSS import URL, which previously caused incorrect stripping and broken styles. Physical iOS/Safari and direct `file://` execution remain unverified; parser checks and HTTP-served browser checks do not establish those behaviors.
+Browser verification of the generated file covers startup, desktop typing, progress after reload, the save options, a 390×844 mobile viewport, touch-key entry, the clue dialog, and a collection deep link. The extracted stylesheet uses system fonts throughout; a regression test covers semicolons inside an external CSS import URL, which previously caused incorrect stripping and broken styles. Additional headless Chromium checks cover two independently styled embeds, progress after reload, destruction with a queued keystroke, repeated destruction, and reopening a styled progress export directly over `file://` with HTTP requests blocked. Physical iOS/Safari remain unverified.

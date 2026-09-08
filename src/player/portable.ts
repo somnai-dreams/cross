@@ -3,6 +3,7 @@ import { readPuzHtml, readPuzHtmlData, writePuzHtml, type PlayerAssets, type Puz
 import { encodePuz } from './puz-format'
 import { parseProgress, progressFile, type Progress } from './engine'
 import { parsePuzzle, type Puzzle, type Result } from './puzzle'
+import type { PlayerConfiguration } from './config'
 
 export type { PlayerAssets } from '../portable'
 export type PortablePuzzle = { puzzle: Puzzle; progress: Progress | null }
@@ -26,14 +27,16 @@ export function parsePortable(text: string): Result<PortablePuzzle> {
   return parsed.ok ? playerSnapshot(parsed.value) : { ok: false, error: parsed.issue.message }
 }
 
-export function portableHtml(puzzle: Puzzle, progress: Progress | null, assets: PlayerAssets): Result<Uint8Array<ArrayBuffer>> {
+export function portableHtml(puzzle: Puzzle, progress: Progress | null, assets: PlayerAssets, publisher?: Pick<PlayerConfiguration, 'brand' | 'homeUrl' | 'storageKey'>): Result<Uint8Array<ArrayBuffer>> {
   const encoded = encodePuz(puzzle)
   if (!encoded.ok) return encoded
   const file: PuzHtmlSnapshot = {
     puzzle: { version: 2, id: puzzle.id, puz: toBase64(encoded.value), hints: puzzle.entries.map(entry => entry.clue.hint) },
     progress: progress === null ? null : progressFile(puzzle, progress),
   }
-  const exported = writePuzHtml(file, assets)
+  // A download stands alone, even when its source player was embedded in a host page.
+  const options = publisher === undefined ? {} : { configuration: { version: 1, ...publisher, mode: 'standalone', chrome: 'full', library: [] } }
+  const exported = writePuzHtml(file, assets, { title: puzzle.title, ...options })
   return exported.ok ? exported : { ok: false, error: exported.issue.message }
 }
 

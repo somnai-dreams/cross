@@ -11,7 +11,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./html": "./src/html.ts",
-    "./player": "./src/player/index.ts"
+    "./player": "./src/player/index.ts",
+    "./embed": "./src/embed.ts"
   },
   "files": [
     "src",
