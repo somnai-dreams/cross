@@ -9,7 +9,7 @@ import { parseProgress, progressFile, type Progress } from './player/engine'
 import { readConfiguration } from './player/config'
 
 export type HtmlPuzzle = Uint8Array | ArrayBuffer | AuthoredPuzzle | PuzData | PuzHtmlSnapshot['puzzle']
-export type HtmlOptions = { progress?: Progress }
+export type HtmlOptions = { progress?: Progress; site?: { name: string; homeUrl: string } }
 export type CollectionOptions = {
   puzzles: { slug: string; puzzle: HtmlPuzzle }[]
   defaultSlug: string
@@ -46,7 +46,11 @@ function packagePuzzle(puzzle: Puzzle, options: HtmlOptions, configuration?: Par
 /** Produce a complete offline crossword with the included desktop/mobile UI. */
 export async function createHtml(input: HtmlPuzzle, options: HtmlOptions = {}): Promise<Result<Uint8Array<ArrayBuffer>>> {
   const parsed = await readInput(input)
-  return parsed.ok ? packagePuzzle(parsed.value, options) : parsed
+  if (!parsed.ok) return parsed
+  if (options.site === undefined) return packagePuzzle(parsed.value, options)
+  const configuration = { version: 1, brand: options.site.name, homeUrl: options.site.homeUrl, storageKey: 'cross', mode: 'standalone', library: [] }
+  const checked = readConfiguration(JSON.stringify(configuration), parsed.value)
+  return checked.ok ? packagePuzzle(parsed.value, options, { configuration }) : fail('invalid-data', '$.site', checked.error)
 }
 
 /** The same included UI, with an optional collection and stable ?puzzle= links. */

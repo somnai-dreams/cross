@@ -78,6 +78,18 @@ test('headless entry point does not pull in the renderer, styles or generated as
   expect(script).toContain('ACROSS&DOWN')
 })
 
+test('a publisher can brand a standalone player and link home without changing its puzzle', async () => {
+  const file = value(await createHtml(puzzleFiles[0]!, { site: { name: 'Cross Daily', homeUrl: '/' } }))
+  const parsed = value(readPortableHtml(file))
+  const text = new TextDecoder().decode(file)
+  const raw = /<script id="crossword-config" type="application\/json">(.*?)<\/script>/.exec(text)![1]!
+  expect(value(readConfiguration(raw, parsed.puzzle))).toMatchObject({ brand: 'Cross Daily', homeUrl: '/', mode: 'standalone', library: [] })
+  expect(parsed.puzzle.entries).toEqual(library[0]!.puzzle.entries)
+  for (const homeUrl of ['javascript:alert(1)', 'data:text/html,test', '//example.com', 'https://']) {
+    expect((await createHtml(puzzleFiles[0]!, { site: { name: 'Publisher', homeUrl } })).ok).toBe(false)
+  }
+})
+
 test('the included UI accepts a 45x45 puzzle without needing a separate renderer', async () => {
   const large = { version: 1 as const, id: 'large', title: 'Large grid', author: 'Synthetic', grid: Array<string>(45).fill('A'.repeat(45)), across: Array<string>(45).fill('Across'), down: Array<string>(45).fill('Down') }
   const html = value(await createHtml(large))

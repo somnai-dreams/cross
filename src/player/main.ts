@@ -681,7 +681,8 @@ for (const [i, letters] of ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'].entries()) {
 }
 required('.brand-name', HTMLSpanElement).textContent = brand
 required('.brand', HTMLAnchorElement).setAttribute('aria-label', `${brand} home`)
-required('.brand', HTMLAnchorElement).href = standalone ? location.href : location.pathname
+required('.brand', HTMLAnchorElement).href = configuration.homeUrl ?? (standalone ? location.href : location.pathname)
+required('.brand', HTMLAnchorElement).target = configuration.homeUrl === null ? '_self' : '_top'
 required('.library-button', HTMLButtonElement).hidden = standalone
 required('.nav-divider', HTMLSpanElement).hidden = standalone
 required('[data-command="next-puzzle"]', HTMLButtonElement).hidden = standalone
